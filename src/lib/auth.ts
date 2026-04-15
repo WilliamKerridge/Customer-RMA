@@ -15,6 +15,13 @@ const pool = new Pool({
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:3000',
   secret: process.env.BETTER_AUTH_SECRET!,
+  trustedOrigins: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3000',
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.BETTER_AUTH_URL,
+  ].filter((v): v is string => !!v),
 
   database: new PostgresDialect({ pool }),
 
