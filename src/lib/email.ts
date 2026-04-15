@@ -39,11 +39,20 @@ async function send({
   template: string
   html: string
 }): Promise<string | null> {
+  // Testing override — when TEST_EMAIL_OVERRIDE is set, redirect every
+  // outgoing email to that address and prepend the intended recipient
+  // to the subject line so we can tell which customer would have received
+  // it. Logged to email_notifications with the original recipient so the
+  // audit trail stays truthful.
+  const override = process.env.TEST_EMAIL_OVERRIDE?.trim()
+  const deliverTo = override || recipientEmail
+  const finalSubject = override ? `[→ ${recipientEmail}] ${subject}` : subject
+
   try {
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
-      to: recipientEmail,
-      subject,
+      to: deliverTo,
+      subject: finalSubject,
       html,
     })
 
