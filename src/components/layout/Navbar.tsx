@@ -31,6 +31,7 @@ export function Navbar() {
   const { data: session } = useSession()
   const [scrolled, setScrolled] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [canonicalRole, setCanonicalRole] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -50,14 +51,28 @@ export function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // Fetch canonical role from public.users — Better Auth session defaults role to
+  // 'customer' for all users; the real role lives in public.users and /api/me bridges it.
+  useEffect(() => {
+    if (!session?.user?.email) {
+      setCanonicalRole(null)
+      return
+    }
+    fetch('/api/me', { cache: 'no-store' })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data?.role) setCanonicalRole(data.role) })
+      .catch(() => {})
+  }, [session?.user?.email])
+
   const handleSignOut = async () => {
     await signOut()
+    setCanonicalRole(null)
     router.push('/')
     router.refresh()
   }
 
   const user = session?.user
-  const role = (user as { role?: string } | undefined)?.role ?? 'customer'
+  const role = canonicalRole ?? 'customer'
   const roleLabel = ROLE_LABELS[role] ?? role
 
   return (
