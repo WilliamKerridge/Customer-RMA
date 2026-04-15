@@ -37,8 +37,8 @@ const PAYMENT_STATUS_LABELS: Record<string, string> = {
   stub_notified: 'Awaiting Contact',
 }
 
-const UK_ADDRESS = `Cosworth Electronics Ltd\nAcorn House, Bakers Road\nUxbridge, UB8 1RG\nUnited Kingdom`
-const US_ADDRESS = `Cosworth Electronics LLC\n8720 Castle Park Drive\nIndianapolis, IN 46256\nUSA`
+const UK_ADDRESS = `Cosworth Electronics Ltd\nBrookfield Technology Centre\nTwentypence Road, Cottenham\nCambridge, CB24 8PS\nUnited Kingdom`
+const US_ADDRESS = `Cosworth Electronics LLC\n5355 W 86th St\nIndianapolis, IN 46268\nUSA`
 
 function formatDate(iso: string | null) {
   if (!iso) return null

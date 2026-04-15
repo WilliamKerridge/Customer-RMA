@@ -14,6 +14,7 @@ const patchSchema = z.object({
   standard_repair_fee: z.number().min(0).optional(),
   major_repair_fee: z.number().min(0).optional(),
   notes: z.string().nullable().optional(),
+  tariff_code: z.string().nullable().optional(),
 })
 
 async function requireStaff() {

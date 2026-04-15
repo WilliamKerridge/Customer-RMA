@@ -112,6 +112,12 @@ export async function sendRMAIssued(
     caseNumber: string
     rmaNumber: string
     officeAddress: string
+    products?: {
+      display_name: string
+      part_number?: string | null
+      quantity: number
+      tariff_code?: string | null
+    }[]
   }
 ) {
   const html = await render(RMAIssued(props))

@@ -4,8 +4,8 @@ import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
 import { sendRMAIssued } from '@/lib/email'
 
-const UK_ADDRESS = 'Cosworth Electronics Ltd, Acorn House, Bakers Road, Uxbridge, UB8 1RG, United Kingdom'
-const US_ADDRESS = 'Cosworth Electronics LLC, 8720 Castle Park Drive, Indianapolis, IN 46256, USA'
+const UK_ADDRESS = 'Cosworth Electronics Ltd, Brookfield Technology Centre, Twentypence Road, Cottenham, Cambridge, CB24 8PS, United Kingdom'
+const US_ADDRESS = 'Cosworth Electronics LLC, 5355 W 86th St, Indianapolis, IN 46268, USA'
 
 async function requireStaff(request: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() })
@@ -88,11 +88,36 @@ export async function POST(
         .single()
       if (customerUser) {
         const cu = customerUser as { email: string; full_name: string | null }
+
+        // Fetch products on this case so the email can list tariff codes
+        const { data: caseProducts } = await supabase
+          .from('case_products')
+          .select('quantity, products(display_name, part_number, tariff_code)')
+          .eq('case_id', caseId)
+
+        type ProductJoin = {
+          quantity: number
+          products: {
+            display_name: string
+            part_number: string | null
+            tariff_code: string | null
+          } | null
+        }
+        const products = ((caseProducts as ProductJoin[] | null) ?? [])
+          .filter((cp) => cp.products !== null)
+          .map((cp) => ({
+            display_name: cp.products!.display_name,
+            part_number: cp.products!.part_number,
+            quantity: cp.quantity,
+            tariff_code: cp.products!.tariff_code,
+          }))
+
         sendRMAIssued(caseId, cu.email, user.email ?? '', {
           customerName: cu.full_name ?? cu.email,
           caseNumber: caseRow.case_number,
           rmaNumber,
           officeAddress,
+          products,
         })
       }
     }

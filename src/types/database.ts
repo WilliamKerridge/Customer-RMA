@@ -96,6 +96,7 @@ export interface Database {
           standard_repair_fee: number
           major_repair_fee: number
           notes: string | null
+          tariff_code: string | null
           created_at: string
           updated_at: string
         }
@@ -110,6 +111,7 @@ export interface Database {
           standard_repair_fee?: number
           major_repair_fee?: number
           notes?: string | null
+          tariff_code?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -123,6 +125,7 @@ export interface Database {
           standard_repair_fee?: number
           major_repair_fee?: number
           notes?: string | null
+          tariff_code?: string | null
           updated_at?: string
         }
         Relationships: []

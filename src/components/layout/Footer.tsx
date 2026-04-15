@@ -2,31 +2,18 @@ export function Footer() {
   return (
     <footer className="bg-navy mt-auto">
       <div className="max-w-7xl mx-auto px-6 py-10">
-        {/* Three-column address grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-8 border-b border-white/10">
-          {/* UK — Northampton */}
-          <div>
-            <p className="font-heading font-semibold text-xs tracking-widest text-white uppercase mb-3">
-              Cosworth Ltd
-            </p>
-            <address className="not-italic text-xs text-white/50 leading-6">
-              Costin House<br />
-              St James Mill Road<br />
-              Northampton<br />
-              NN5 5JJ, United Kingdom
-            </address>
-          </div>
-
+        {/* Two-column address grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-8 border-b border-white/10">
           {/* UK — Cambridge */}
           <div>
             <p className="font-heading font-semibold text-xs tracking-widest text-white uppercase mb-3">
               Cosworth Electronics Ltd
             </p>
             <address className="not-italic text-xs text-white/50 leading-6">
-              Whiting Way<br />
-              Melbourn<br />
-              Royston<br />
-              SG8 6EN, United Kingdom
+              Brookfield Technology Centre<br />
+              Twentypence Road, Cottenham<br />
+              Cambridge, CB24 8PS<br />
+              United Kingdom
             </address>
           </div>
 
@@ -36,10 +23,9 @@ export function Footer() {
               Cosworth Electronics LLC
             </p>
             <address className="not-italic text-xs text-white/50 leading-6">
-              6850 Weaver Road<br />
-              Suite 700<br />
-              Indianapolis<br />
-              IN 46268, United States
+              5355 W 86th St<br />
+              Indianapolis, IN 46268<br />
+              United States
             </address>
           </div>
         </div>

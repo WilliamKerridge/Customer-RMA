@@ -30,6 +30,7 @@ interface FormState {
   display_name: string
   category: string
   notes: string
+  tariff_code: string
   test_fee: string
   standard_repair_fee: string
   major_repair_fee: string
@@ -46,6 +47,7 @@ export default function ProductForm({ product, totalCases = 0, openCases = 0, is
     display_name: product?.display_name ?? '',
     category: product?.category ?? '',
     notes: product?.notes ?? '',
+    tariff_code: product?.tariff_code ?? '',
     test_fee: String(product?.test_fee ?? 0),
     standard_repair_fee: String(product?.standard_repair_fee ?? 0),
     major_repair_fee: String(product?.major_repair_fee ?? 0),
@@ -80,6 +82,7 @@ export default function ProductForm({ product, totalCases = 0, openCases = 0, is
       display_name: form.display_name.trim(),
       category: form.category,
       notes: form.notes.trim() || null,
+      tariff_code: form.tariff_code.trim() || null,
       test_fee: Number(form.test_fee),
       standard_repair_fee: Number(form.standard_repair_fee),
       major_repair_fee: Number(form.major_repair_fee),
@@ -223,6 +226,7 @@ export default function ProductForm({ product, totalCases = 0, openCases = 0, is
               </select>
               {errors.category && <p className="mt-1 text-[12px] text-red-500">{errors.category}</p>}
             </div>
+            {field('tariff_code', 'Customs Tariff Code', false, 'HS/commodity code shown on the RMA approval email and shipping paperwork.')}
             <div className="mb-0">
               <label htmlFor="notes" className="block text-sm font-medium text-grey-700 mb-1.5">Internal Notes</label>
               <textarea
