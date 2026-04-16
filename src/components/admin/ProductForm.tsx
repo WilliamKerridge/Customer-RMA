@@ -34,6 +34,7 @@ interface FormState {
   test_fee: string
   standard_repair_fee: string
   major_repair_fee: string
+  service_fee: string
   active: boolean
 }
 
@@ -51,6 +52,7 @@ export default function ProductForm({ product, totalCases = 0, openCases = 0, is
     test_fee: String(product?.test_fee ?? 0),
     standard_repair_fee: String(product?.standard_repair_fee ?? 0),
     major_repair_fee: String(product?.major_repair_fee ?? 0),
+    service_fee: String(product?.service_fee ?? 0),
     active: product?.active ?? true,
   })
 
@@ -67,6 +69,7 @@ export default function ProductForm({ product, totalCases = 0, openCases = 0, is
     if (isNaN(Number(form.test_fee)) || Number(form.test_fee) < 0) e.test_fee = 'Must be a positive number'
     if (isNaN(Number(form.standard_repair_fee)) || Number(form.standard_repair_fee) < 0) e.standard_repair_fee = 'Must be a positive number'
     if (isNaN(Number(form.major_repair_fee)) || Number(form.major_repair_fee) < 0) e.major_repair_fee = 'Must be a positive number'
+    if (isNaN(Number(form.service_fee)) || Number(form.service_fee) < 0) e.service_fee = 'Must be a positive number'
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -86,6 +89,7 @@ export default function ProductForm({ product, totalCases = 0, openCases = 0, is
       test_fee: Number(form.test_fee),
       standard_repair_fee: Number(form.standard_repair_fee),
       major_repair_fee: Number(form.major_repair_fee),
+      service_fee: Number(form.service_fee),
       active: form.active,
     }
 
@@ -157,7 +161,7 @@ export default function ProductForm({ product, totalCases = 0, openCases = 0, is
     )
   }
 
-  function feeField(id: 'test_fee' | 'standard_repair_fee' | 'major_repair_fee', label: string, hint: string) {
+  function feeField(id: 'test_fee' | 'standard_repair_fee' | 'major_repair_fee' | 'service_fee', label: string, hint: string) {
     return (
       <div className="mb-5">
         <label htmlFor={id} className="block text-sm font-medium text-grey-700 mb-1.5">
@@ -257,6 +261,7 @@ export default function ProductForm({ product, totalCases = 0, openCases = 0, is
             {feeField('test_fee', 'Test Fee', 'Fee charged when unit is received and tested')}
             {feeField('standard_repair_fee', 'Standard Repair Fee', 'Standard component-level repair')}
             {feeField('major_repair_fee', 'Major Repair Fee', 'Board-level or full unit replacement')}
+            {feeField('service_fee', 'Service Fee', 'Fee for end of season service or service plan')}
           </div>
         </div>
       </div>

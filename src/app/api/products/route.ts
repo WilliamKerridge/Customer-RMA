@@ -13,6 +13,7 @@ const createSchema = z.object({
   test_fee: z.number().min(0).default(0),
   standard_repair_fee: z.number().min(0).default(0),
   major_repair_fee: z.number().min(0).default(0),
+  service_fee: z.number().min(0).default(0),
   notes: z.string().optional().nullable(),
   tariff_code: z.string().optional().nullable(),
 })

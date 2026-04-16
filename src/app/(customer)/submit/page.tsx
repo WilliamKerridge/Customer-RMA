@@ -10,7 +10,7 @@ export default async function SubmitPage() {
   // Fetch active products for the form
   const { data: products } = await supabase
     .from('products')
-    .select('id, part_number, variant, display_name, category, test_fee, standard_repair_fee, major_repair_fee')
+    .select('id, part_number, variant, display_name, category, test_fee, standard_repair_fee, major_repair_fee, service_fee')
     .eq('active', true)
     .order('category')
     .order('display_name')

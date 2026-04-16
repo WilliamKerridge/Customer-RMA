@@ -31,7 +31,7 @@ function formatFee(n: number) {
   return `£${n.toLocaleString('en-GB')}`
 }
 
-type FeeField = 'test_fee' | 'standard_repair_fee' | 'major_repair_fee'
+type FeeField = 'test_fee' | 'standard_repair_fee' | 'major_repair_fee' | 'service_fee'
 
 interface EditingCell {
   productId: string
@@ -176,6 +176,9 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
             <th className="text-right text-xs font-semibold uppercase tracking-wider px-4 py-3 w-28" style={{ color: '#b45309' }}>
               Major Repair
             </th>
+            <th className="text-right text-xs font-semibold uppercase tracking-wider px-4 py-3 w-28" style={{ color: '#059669' }}>
+              Service
+            </th>
             <th className="text-center text-xs font-semibold text-grey-500 uppercase tracking-wider px-4 py-3 w-16">
               Active
             </th>
@@ -185,7 +188,7 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
         <tbody>
           {products.length === 0 && (
             <tr>
-              <td colSpan={8} className="text-center text-sm text-grey-400 py-12">
+              <td colSpan={9} className="text-center text-sm text-grey-400 py-12">
                 No products found.
               </td>
             </tr>
@@ -218,6 +221,9 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
               </td>
               <td className="px-4 py-3.5 text-right">
                 {feeCell(product, 'major_repair_fee', 'bg-amber-500')}
+              </td>
+              <td className="px-4 py-3.5 text-right">
+                {feeCell(product, 'service_fee', 'bg-emerald-500')}
               </td>
               <td className="px-4 py-3.5 text-center">
                 <button

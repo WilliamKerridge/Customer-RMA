@@ -13,6 +13,7 @@ const patchSchema = z.object({
   test_fee: z.number().min(0).optional(),
   standard_repair_fee: z.number().min(0).optional(),
   major_repair_fee: z.number().min(0).optional(),
+  service_fee: z.number().min(0).optional(),
   notes: z.string().nullable().optional(),
   tariff_code: z.string().nullable().optional(),
 })

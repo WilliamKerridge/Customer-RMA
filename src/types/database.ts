@@ -95,6 +95,7 @@ export interface Database {
           test_fee: number
           standard_repair_fee: number
           major_repair_fee: number
+          service_fee: number
           notes: string | null
           tariff_code: string | null
           created_at: string
@@ -110,6 +111,7 @@ export interface Database {
           test_fee?: number
           standard_repair_fee?: number
           major_repair_fee?: number
+          service_fee?: number
           notes?: string | null
           tariff_code?: string | null
           created_at?: string
@@ -124,6 +126,7 @@ export interface Database {
           test_fee?: number
           standard_repair_fee?: number
           major_repair_fee?: number
+          service_fee?: number
           notes?: string | null
           tariff_code?: string | null
           updated_at?: string

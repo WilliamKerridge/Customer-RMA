@@ -17,7 +17,7 @@ const STEP_LABELS = ['Contact', 'Office & Date', 'Products', 'Fault Details', 'R
 interface Props {
   products: Pick<
     ProductRow,
-    'id' | 'part_number' | 'variant' | 'display_name' | 'category' | 'test_fee' | 'standard_repair_fee' | 'major_repair_fee'
+    'id' | 'part_number' | 'variant' | 'display_name' | 'category' | 'test_fee' | 'standard_repair_fee' | 'major_repair_fee' | 'service_fee'
   >[]
   initialUser: {
     id: string

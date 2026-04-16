@@ -42,7 +42,7 @@ const COUNTRY_NAMES: Record<string, string> = {
 
 interface Props {
   formData: RMAFormData
-  products: Pick<ProductRow, 'id' | 'part_number' | 'display_name' | 'variant' | 'test_fee'>[]
+  products: Pick<ProductRow, 'id' | 'part_number' | 'display_name' | 'variant' | 'test_fee' | 'service_fee'>[]
   account: CustomerAccountRow | null
   onBack: () => void
   onSubmit: () => void
@@ -75,9 +75,19 @@ export default function Step5Review({
   const productMap = Object.fromEntries(products.map((p) => [p.id, p]))
 
   const hasCreditTerms = account?.credit_terms === true
+
+  function productFee(productId: string, entryId: string, quantity: number): number {
+    const product = productMap[productId]
+    if (!product) return 0
+    const pf = step4.product_faults.find((f) => f.entry_id === entryId)
+    const faultType = pf?.fault_type ?? 'repair'
+    if (faultType === 'loan_return') return 0
+    if (faultType === 'service' || faultType === 'service_plan') return product.service_fee * quantity
+    return product.test_fee * quantity
+  }
+
   const totalTestFee = step3.products.reduce((sum, p) => {
-    const product = productMap[p.product_id]
-    return sum + (product ? product.test_fee * p.quantity : 0)
+    return sum + productFee(p.product_id, p.id, p.quantity)
   }, 0)
 
   const formatDate = (iso: string) => {
@@ -164,14 +174,20 @@ export default function Step5Review({
                       <div className="text-[13px] text-grey-500">Product {i + 1}</div>
                     )}
                   </div>
-                  {product && (
-                    <div className="text-right flex-shrink-0">
-                      <div className="text-[11px] text-grey-400">Inspection fee</div>
-                      <div className="text-[13px] font-semibold text-text">
-                        £{(product.test_fee * p.quantity).toFixed(2)}
+                  {product && (() => {
+                    const fee = productFee(p.product_id, p.id, p.quantity)
+                    const faultType = step4.product_faults.find((f) => f.entry_id === p.id)?.fault_type
+                    if (faultType === 'loan_return') return null
+                    const label = (faultType === 'service' || faultType === 'service_plan') ? 'Service fee' : 'Inspection fee'
+                    return (
+                      <div className="text-right flex-shrink-0">
+                        <div className="text-[11px] text-grey-400">{label}</div>
+                        <div className="text-[13px] font-semibold text-text">
+                          £{fee.toFixed(2)}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )
+                  })()}
                 </div>
               )
             })}
@@ -266,7 +282,7 @@ export default function Step5Review({
           <div className="bg-amber-50 border border-amber-200 rounded-[10px] px-4 py-3.5 mb-4">
             <div className="text-[13px] text-amber-800">
               <strong>Payment Notice</strong>{' '}
-              {totalTestFee > 0 && `An inspection fee of £${totalTestFee.toFixed(2)} is required. `}
+              {totalTestFee > 0 && `An estimated fee of £${totalTestFee.toFixed(2)} is required. `}
               A member of our team will contact you within 24 hours to arrange payment before your RMA is issued.
             </div>
           </div>
