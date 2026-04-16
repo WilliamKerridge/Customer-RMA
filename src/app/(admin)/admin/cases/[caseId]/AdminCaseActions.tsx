@@ -17,6 +17,12 @@ interface Props {
   productName?: string
   // Content rendered between Case Review and Workshop Stage cards (e.g. submission details)
   slotBetweenReviewAndStage?: React.ReactNode
+  // New: for Issue RMA flow
+  allProductsReviewed: boolean
+  hasAcceptedProducts: boolean
+  creditTerms: boolean
+  poRequired: boolean
+  poNumber: string | null
 }
 
 export default function AdminCaseActions({
@@ -30,18 +36,25 @@ export default function AdminCaseActions({
   productStage,
   productName,
   slotBetweenReviewAndStage,
+  allProductsReviewed,
+  hasAcceptedProducts,
+  creditTerms,
+  poRequired,
+  poNumber,
 }: Props) {
   const router = useRouter()
   const [stageLoading, setStageLoading] = useState<string | null>(null)
   const [holdLoading, setHoldLoading] = useState(false)
   const [clearHoldLoading, setClearHoldLoading] = useState(false)
-  const [approveLoading, setApproveLoading] = useState(false)
   const [rejectLoading, setRejectLoading] = useState(false)
   const [selectedHold, setSelectedHold] = useState<HoldReason | ''>('')
   const [holdQuestion, setHoldQuestion] = useState('')
   const [rejectReason, setRejectReason] = useState('')
   const [showRejectForm, setShowRejectForm] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showIssueRmaPanel, setShowIssueRmaPanel] = useState(false)
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false)
+  const [issueRmaLoading, setIssueRmaLoading] = useState(false)
 
   // When productId is provided use product stage, otherwise fall back to case stage
   const activeStage = productId ? productStage : currentStage
@@ -116,23 +129,6 @@ export default function AdminCaseActions({
     }
   }
 
-  async function approve() {
-    setApproveLoading(true)
-    setError(null)
-    try {
-      const res = await fetch(`/api/cases/${caseId}/approve`, { method: 'POST' })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data.message ?? 'Failed to approve case')
-      }
-      router.refresh()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
-    } finally {
-      setApproveLoading(false)
-    }
-  }
-
   async function reject() {
     if (!rejectReason.trim()) return
     setRejectLoading(true)
@@ -155,40 +151,126 @@ export default function AdminCaseActions({
     }
   }
 
+  async function issueRma() {
+    setIssueRmaLoading(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/cases/${caseId}/approve`, { method: 'POST' })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.message ?? 'Failed to issue RMA')
+      }
+      router.refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+    } finally {
+      setIssueRmaLoading(false)
+    }
+  }
+
   return (
     <div className="space-y-4">
-      {/* Approval actions (SUBMITTED only) */}
+      {/* Case Review (SUBMITTED only) */}
       {currentStatus === 'SUBMITTED' && (
         <div className="bg-white rounded-xl border border-grey-200 shadow-sm overflow-hidden">
           <div className="px-[22px] py-[18px] border-b border-grey-100">
             <h2 className="font-heading text-sm font-semibold text-text">Case Review</h2>
           </div>
-          <div className="px-[22px] py-5">
-            <p className="text-[13px] text-grey-600 mb-4">
-              This case is pending review. Approve to issue an RMA number, or reject with a reason.
-            </p>
-            <div className="flex gap-2.5">
+          <div className="px-[22px] py-5 space-y-4">
+
+            {/* Product review status */}
+            {!allProductsReviewed && (
+              <div className="flex items-center gap-2 text-[12px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 flex-shrink-0">
+                  <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                Accept or reject each product in the Products card before issuing the RMA.
+              </div>
+            )}
+
+            {/* Issue RMA button */}
+            <div className="flex gap-2.5 flex-wrap">
               <button
-                onClick={approve}
-                disabled={approveLoading}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold bg-green-600 text-white hover:bg-green-700 transition-all disabled:opacity-60"
+                onClick={() => { setShowIssueRmaPanel((s) => !s); setPaymentConfirmed(false) }}
+                disabled={!allProductsReviewed || !hasAcceptedProducts}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold bg-green-600 text-white hover:bg-green-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {approveLoading ? 'Approving…' : 'Approve & Issue RMA'}
+                Issue RMA
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="w-3.5 h-3.5">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
               </button>
               <button
                 onClick={() => setShowRejectForm((s) => !s)}
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold bg-white text-red-600 border border-red-200 hover:bg-red-50 transition-all"
               >
-                Reject
+                Reject Entire Case
               </button>
             </div>
+
+            {/* Payment gate panel */}
+            {showIssueRmaPanel && allProductsReviewed && hasAcceptedProducts && (
+              <div className="border border-grey-200 rounded-lg bg-grey-50 p-4 space-y-3">
+                <div className="text-[12px] font-semibold text-grey-700 uppercase tracking-[0.05em]">
+                  Payment &amp; PO Confirmation
+                </div>
+
+                {creditTerms ? (
+                  <div className="flex items-center gap-2 text-[12px] text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="w-4 h-4 flex-shrink-0">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    Customer has credit terms — no upfront payment required.
+                  </div>
+                ) : (
+                  <label className="flex items-start gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={paymentConfirmed}
+                      onChange={(e) => setPaymentConfirmed(e.target.checked)}
+                      className="mt-0.5 w-4 h-4 rounded accent-blue-600 cursor-pointer"
+                    />
+                    <span className="text-[12.5px] text-grey-700">
+                      I confirm that payment or a valid PO has been received for this case before issuing the RMA.
+                    </span>
+                  </label>
+                )}
+
+                {poRequired && !poNumber && (
+                  <div className="flex items-center gap-2 text-[12px] text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 flex-shrink-0">
+                      <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    Account requires a PO number but none was provided on submission. Confirm with the customer before proceeding.
+                  </div>
+                )}
+
+                <div className="flex gap-2.5 pt-1">
+                  <button
+                    onClick={() => setShowIssueRmaPanel(false)}
+                    className="text-[12px] font-semibold text-grey-500 hover:text-grey-700 px-3 py-1.5 rounded-md border border-grey-200 bg-white"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={issueRma}
+                    disabled={issueRmaLoading || (!creditTerms && !paymentConfirmed)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[12px] font-semibold bg-green-600 text-white hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {issueRmaLoading ? 'Issuing…' : 'Confirm & Issue RMA'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Case-level reject form */}
             {showRejectForm && (
-              <div className="mt-4 space-y-2">
+              <div className="space-y-2">
                 <textarea
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
                   rows={3}
-                  placeholder="Reason for rejection…"
+                  placeholder="Reason for rejecting the entire case…"
                   className="w-full px-3.5 py-[9px] border border-grey-200 rounded-lg text-[13px] outline-none focus:border-red-400 focus:shadow-[0_0_0_3px_rgba(220,38,38,0.1)] resize-y"
                 />
                 <button
@@ -196,7 +278,7 @@ export default function AdminCaseActions({
                   disabled={rejectLoading || !rejectReason.trim()}
                   className="px-4 py-2 rounded-lg text-[13px] font-semibold bg-red-600 text-white hover:bg-red-700 transition-all disabled:opacity-60"
                 >
-                  {rejectLoading ? 'Rejecting…' : 'Confirm Rejection'}
+                  {rejectLoading ? 'Rejecting…' : 'Confirm Case Rejection'}
                 </button>
               </div>
             )}
