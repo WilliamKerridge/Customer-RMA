@@ -46,7 +46,8 @@ test.describe('Authentication', () => {
     await page.getByRole('button', { name: 'Sign In' }).last().click()
     await page.waitForURL(`${BASE}/admin/dashboard`, { timeout: 15000 })
     // Wait for the role label to be fetched from /api/me
-    await expect(page.locator('text=Admin')).toBeVisible({ timeout: 8000 })
+    // Use .first() — "Admin" appears in the navbar button, sidebar user card, and sidebar section header
+    await expect(page.locator('text=Admin').first()).toBeVisible({ timeout: 8000 })
   })
 
   test('unauthenticated access to /cases redirects to login', async ({ page }) => {
