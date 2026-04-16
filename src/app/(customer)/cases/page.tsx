@@ -33,7 +33,11 @@ export default async function CasesPage() {
     const product_name = cp?.products
       ? `${cp.products.display_name}${cp.products.variant ? ` ${cp.products.variant}` : ''}`
       : null
-    return { ...c, product_name } as typeof c & { product_name: string | null }
+    const clientCase = { ...c, product_name } as typeof c & { product_name: string | null }
+    // SAP financial data is staff-only — strip before passing to client component (CLAUDE.md rule 5)
+    delete (clientCase as Record<string, unknown>).sap_order_value
+    delete (clientCase as Record<string, unknown>).sap_spent_hours
+    return clientCase
   })
 
   return (
