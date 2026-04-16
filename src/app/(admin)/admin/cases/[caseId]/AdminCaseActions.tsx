@@ -191,7 +191,7 @@ export default function AdminCaseActions({
             {/* Issue RMA button */}
             <div className="flex gap-2.5 flex-wrap">
               <button
-                onClick={() => { setShowIssueRmaPanel((s) => !s); setPaymentConfirmed(false) }}
+                onClick={() => { setShowIssueRmaPanel((s) => !s); setPaymentConfirmed(false); setShowRejectForm(false) }}
                 disabled={!allProductsReviewed || !hasAcceptedProducts}
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold bg-green-600 text-white hover:bg-green-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
@@ -201,7 +201,7 @@ export default function AdminCaseActions({
                 </svg>
               </button>
               <button
-                onClick={() => setShowRejectForm((s) => !s)}
+                onClick={() => { setShowRejectForm((s) => !s); setShowIssueRmaPanel(false); setPaymentConfirmed(false) }}
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold bg-white text-red-600 border border-red-200 hover:bg-red-50 transition-all"
               >
                 Reject Entire Case
