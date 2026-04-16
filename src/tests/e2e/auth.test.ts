@@ -5,7 +5,8 @@ const BASE = process.env.PLAYWRIGHT_BASE_URL ?? 'https://customer-rma.vercel.app
 test.describe('Authentication', () => {
   test('login page loads and shows both tabs', async ({ page }) => {
     await page.goto(`${BASE}/login`)
-    await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible()
+    // Use .first() — both the tab button and form submit button are named "Sign In"
+    await expect(page.getByRole('button', { name: 'Sign In' }).first()).toBeVisible()
     await expect(page.getByRole('button', { name: 'Register' })).toBeVisible()
   })
 
@@ -13,7 +14,8 @@ test.describe('Authentication', () => {
     await page.goto(`${BASE}/login`)
     await page.getByLabel('Email address').fill('nobody@example.com')
     await page.getByLabel('Password').fill('wrongpassword')
-    await page.getByRole('button', { name: 'Sign In' }).click()
+    // Use .last() to click the form submit button (not the tab button)
+    await page.getByRole('button', { name: 'Sign In' }).last().click()
     // Should show an error message, not redirect
     await expect(page.locator('p.text-red-600')).toBeVisible({ timeout: 10000 })
     expect(page.url()).toContain('/login')
@@ -23,7 +25,7 @@ test.describe('Authentication', () => {
     await page.goto(`${BASE}/login`)
     await page.getByLabel('Email address').fill('demo.customer@btsport.com')
     await page.getByLabel('Password').fill('Demo1234!')
-    await page.getByRole('button', { name: 'Sign In' }).click()
+    await page.getByRole('button', { name: 'Sign In' }).last().click()
     await page.waitForURL(`${BASE}/cases`, { timeout: 15000 })
     expect(page.url()).toContain('/cases')
   })
@@ -32,7 +34,7 @@ test.describe('Authentication', () => {
     await page.goto(`${BASE}/login`)
     await page.getByLabel('Email address').fill('demo.admin@cosworth.com')
     await page.getByLabel('Password').fill('Demo1234!')
-    await page.getByRole('button', { name: 'Sign In' }).click()
+    await page.getByRole('button', { name: 'Sign In' }).last().click()
     await page.waitForURL(`${BASE}/admin/dashboard`, { timeout: 15000 })
     expect(page.url()).toContain('/admin/dashboard')
   })
@@ -41,7 +43,7 @@ test.describe('Authentication', () => {
     await page.goto(`${BASE}/login`)
     await page.getByLabel('Email address').fill('demo.admin@cosworth.com')
     await page.getByLabel('Password').fill('Demo1234!')
-    await page.getByRole('button', { name: 'Sign In' }).click()
+    await page.getByRole('button', { name: 'Sign In' }).last().click()
     await page.waitForURL(`${BASE}/admin/dashboard`, { timeout: 15000 })
     // Wait for the role label to be fetched from /api/me
     await expect(page.locator('text=Admin')).toBeVisible({ timeout: 8000 })
