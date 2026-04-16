@@ -78,10 +78,11 @@ export default function Step1Contact({ data, onNext, isGuest }: Props) {
 
           <div className="grid grid-cols-2 gap-3.5 mb-[18px]">
             <div>
-              <label className="block text-[13px] font-semibold text-grey-700 mb-1.5">
+              <label htmlFor="step1-full-name" className="block text-[13px] font-semibold text-grey-700 mb-1.5">
                 Full Name <span className="text-blue ml-0.5">*</span>
               </label>
               <input
+                id="step1-full-name"
                 {...register('full_name')}
                 className={inputClass(!!errors.full_name)}
                 placeholder="John Smith"
@@ -91,10 +92,11 @@ export default function Step1Contact({ data, onNext, isGuest }: Props) {
               )}
             </div>
             <div>
-              <label className="block text-[13px] font-semibold text-grey-700 mb-1.5">
+              <label htmlFor="step1-company" className="block text-[13px] font-semibold text-grey-700 mb-1.5">
                 Company <span className="text-blue ml-0.5">*</span>
               </label>
               <input
+                id="step1-company"
                 {...register('company')}
                 className={inputClass(!!errors.company)}
                 placeholder="Your Team / Company"
@@ -107,10 +109,11 @@ export default function Step1Contact({ data, onNext, isGuest }: Props) {
 
           <div className="grid grid-cols-2 gap-3.5 mb-[18px]">
             <div>
-              <label className="block text-[13px] font-semibold text-grey-700 mb-1.5">
+              <label htmlFor="step1-email" className="block text-[13px] font-semibold text-grey-700 mb-1.5">
                 Email Address <span className="text-blue ml-0.5">*</span>
               </label>
               <input
+                id="step1-email"
                 {...register('email')}
                 type="email"
                 className={inputClass(!!errors.email)}
@@ -121,8 +124,9 @@ export default function Step1Contact({ data, onNext, isGuest }: Props) {
               )}
             </div>
             <div>
-              <label className="block text-[13px] font-semibold text-grey-700 mb-1.5">Phone</label>
+              <label htmlFor="step1-phone" className="block text-[13px] font-semibold text-grey-700 mb-1.5">Phone</label>
               <input
+                id="step1-phone"
                 {...register('phone')}
                 className={inputClass(false)}
                 placeholder="+44 7700 900000"
@@ -134,10 +138,11 @@ export default function Step1Contact({ data, onNext, isGuest }: Props) {
           <h3 className="text-[13px] font-semibold text-grey-700 mb-3.5">Return Shipping Address</h3>
 
           <div className="mb-[18px]">
-            <label className="block text-[13px] font-semibold text-grey-700 mb-1.5">
+            <label htmlFor="step1-street" className="block text-[13px] font-semibold text-grey-700 mb-1.5">
               Street Address <span className="text-blue ml-0.5">*</span>
             </label>
             <input
+              id="step1-street"
               {...register('street_address')}
               className={inputClass(!!errors.street_address)}
               placeholder="123 Race Circuit Road"
@@ -149,16 +154,18 @@ export default function Step1Contact({ data, onNext, isGuest }: Props) {
 
           <div className="grid grid-cols-2 gap-3.5 mb-[18px]">
             <div>
-              <label className="block text-[13px] font-semibold text-grey-700 mb-1.5">City</label>
+              <label htmlFor="step1-city" className="block text-[13px] font-semibold text-grey-700 mb-1.5">City</label>
               <input
+                id="step1-city"
                 {...register('city')}
                 className={inputClass(false)}
                 placeholder="Northamptonshire"
               />
             </div>
             <div>
-              <label className="block text-[13px] font-semibold text-grey-700 mb-1.5">Postcode / ZIP</label>
+              <label htmlFor="step1-postcode" className="block text-[13px] font-semibold text-grey-700 mb-1.5">Postcode / ZIP</label>
               <input
+                id="step1-postcode"
                 {...register('postcode')}
                 className={inputClass(false)}
                 placeholder="NN12 8TN"
@@ -167,8 +174,9 @@ export default function Step1Contact({ data, onNext, isGuest }: Props) {
           </div>
 
           <div className="mb-2">
-            <label className="block text-[13px] font-semibold text-grey-700 mb-1.5">Country</label>
+            <label htmlFor="step1-country" className="block text-[13px] font-semibold text-grey-700 mb-1.5">Country</label>
             <select
+              id="step1-country"
               {...register('country')}
               className={inputClass(false)}
             >
