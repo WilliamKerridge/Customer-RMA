@@ -109,15 +109,54 @@ export default async function AdminReportsPage() {
 
   if (!['staff_uk', 'staff_us', 'admin'].includes(role)) redirect('/')
 
+  // ── Query 1: all open cases (for pipeline stats only — id + status)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let openQuery: any = supabase
+    .from('cases')
+    .select('id, status')
+    .in('status', [...OPEN_STATUSES])
+  if (role !== 'admin') openQuery = openQuery.eq('office', office as 'UK' | 'US')
+  const { data: allOpenCases } = await openQuery
+
+  // Pipeline counts per status
+  const pipelineCounts = Object.fromEntries(
+    OPEN_STATUSES.map((s) => [s, 0])
+  ) as Record<string, number>
+  for (const c of allOpenCases ?? []) {
+    if (c.status in pipelineCounts) pipelineCounts[c.status]++
+  }
+
+  const PIPELINE_STATS = [
+    { label: 'Awaiting Review',  value: pipelineCounts.SUBMITTED + pipelineCounts.UNDER_REVIEW, colour: 'border-blue' },
+    { label: 'Awaiting Payment', value: pipelineCounts.AWAITING_PAYMENT, colour: 'border-orange-400' },
+    { label: 'RMA Issued',       value: pipelineCounts.RMA_ISSUED, colour: 'border-purple-400' },
+    { label: 'In Workshop',      value: pipelineCounts.PARTS_RECEIVED + pipelineCounts.IN_REPAIR + pipelineCounts.QUALITY_CHECK + pipelineCounts.READY_TO_RETURN, colour: 'border-cyan-400' },
+  ]
+
   return (
     <div className="p-6 max-w-[1400px]">
+      {/* Page header */}
       <div className="mb-6">
         <h1 className="font-heading text-[22px] font-bold text-text">Reports</h1>
         <p className="text-[13px] text-grey-500 mt-0.5">
           {role === 'admin' ? 'All offices' : `${office} workshop queue`}
         </p>
       </div>
-      <p className="text-[13px] text-grey-400">Loading report data…</p>
+
+      {/* Pipeline summary stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {PIPELINE_STATS.map(({ label, value, colour }) => (
+          <div key={label} className={`bg-white rounded-xl border border-grey-200 shadow-sm pt-3 pb-4 px-5 border-t-[3px] ${colour}`}>
+            <div className="text-[11px] font-semibold text-grey-400 uppercase tracking-[0.06em] mb-1">{label}</div>
+            <div className="font-heading text-[28px] font-bold text-text">{value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Placeholder for Task 3 */}
+      <div className="bg-white rounded-xl border border-grey-200 shadow-sm px-5 py-8 text-center text-[13px] text-grey-400">
+        Workshop table coming in Task 3
+      </div>
     </div>
   )
 }
