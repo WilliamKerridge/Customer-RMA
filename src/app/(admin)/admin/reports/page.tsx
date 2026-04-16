@@ -41,7 +41,9 @@ function buildCaseTimeline(
   currentWorkshopStage: string | null,
   updates: Array<{ status_change_to: string | null; content: string; created_at: string }>
 ): TimelineEntry[] {
-  // Include status transitions AND case-level workshop stage transitions
+  // Include status transitions AND case-level workshop stage transitions.
+  // The 'Workshop stage updated to' prefix is set by src/app/api/cases/[caseId]/stage/route.ts —
+  // if that content string ever changes, update this filter too.
   const transitions = updates
     .filter(u => u.status_change_to !== null || u.content.startsWith('Workshop stage updated to'))
     .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
@@ -140,7 +142,7 @@ export default async function AdminReportsPage() {
     .select(`
       id, case_number, rma_number, status, office, workshop_stage,
       is_on_hold, hold_reason, hold_customer_label,
-      sap_works_order, sap_estimated_completion, required_return_date,
+      sap_estimated_completion, required_return_date,
       created_at, updated_at,
       customer_id,
       case_products(
