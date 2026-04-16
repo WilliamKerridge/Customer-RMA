@@ -28,16 +28,18 @@ type RegisterValues = z.infer<typeof registerSchema>
 // ── Shared field components ───────────────────────────────────
 function Field({
   label,
+  htmlFor,
   error,
   children,
 }: {
   label: string
+  htmlFor?: string
   error?: string
   children: React.ReactNode
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-sm font-medium text-text">{label}</label>
+      <label htmlFor={htmlFor} className="text-sm font-medium text-text">{label}</label>
       {children}
       {error && <p className="text-xs text-red-600">{error}</p>}
     </div>
@@ -71,8 +73,9 @@ function SignInForm({ onSuccess }: { onSuccess: () => void }) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
-      <Field label="Email address" error={errors.email?.message}>
+      <Field label="Email address" htmlFor="signin-email" error={errors.email?.message}>
         <input
+          id="signin-email"
           type="email"
           autoComplete="email"
           placeholder="you@example.com"
@@ -81,8 +84,9 @@ function SignInForm({ onSuccess }: { onSuccess: () => void }) {
         />
       </Field>
 
-      <Field label="Password" error={errors.password?.message}>
+      <Field label="Password" htmlFor="signin-password" error={errors.password?.message}>
         <input
+          id="signin-password"
           type="password"
           autoComplete="current-password"
           placeholder="••••••••"
@@ -143,8 +147,9 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="First name" error={errors.firstName?.message}>
+        <Field label="First name" htmlFor="reg-first-name" error={errors.firstName?.message}>
           <input
+            id="reg-first-name"
             type="text"
             autoComplete="given-name"
             placeholder="Will"
@@ -152,8 +157,9 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
             {...register('firstName')}
           />
         </Field>
-        <Field label="Last name" error={errors.lastName?.message}>
+        <Field label="Last name" htmlFor="reg-last-name" error={errors.lastName?.message}>
           <input
+            id="reg-last-name"
             type="text"
             autoComplete="family-name"
             placeholder="Kerridge"
@@ -163,8 +169,9 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
         </Field>
       </div>
 
-      <Field label="Company" error={errors.company?.message}>
+      <Field label="Company" htmlFor="reg-company" error={errors.company?.message}>
         <input
+          id="reg-company"
           type="text"
           autoComplete="organization"
           placeholder="BT Sport Motorsport"
@@ -173,8 +180,9 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
         />
       </Field>
 
-      <Field label="Email address" error={errors.email?.message}>
+      <Field label="Email address" htmlFor="reg-email" error={errors.email?.message}>
         <input
+          id="reg-email"
           type="email"
           autoComplete="email"
           placeholder="you@example.com"
@@ -183,8 +191,9 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
         />
       </Field>
 
-      <Field label="Password" error={errors.password?.message}>
+      <Field label="Password" htmlFor="reg-password" error={errors.password?.message}>
         <input
+          id="reg-password"
           type="password"
           autoComplete="new-password"
           placeholder="Min 8 characters"
