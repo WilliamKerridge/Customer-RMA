@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import AdminCaseActions from '@/app/(admin)/admin/cases/[caseId]/AdminCaseActions'
 import AdminPostUpdateForm from '@/app/(admin)/admin/cases/[caseId]/AdminPostUpdateForm'
 import AdminAttachmentsCard from '@/components/admin/AdminAttachmentsCard'
+import { REJECTION_REASONS } from '@/lib/rejection-reasons'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -160,6 +161,8 @@ export default function AdminCaseDetailClient({
   submissionDetails,
 }: Props) {
   const isMultiProduct = products.length > 1
+  const allProductsReviewed = products.every((p) => p.status !== 'pending')
+  const hasAcceptedProducts = products.some((p) => p.status === 'accepted')
 
   // Always default to the first product so updates are tagged to a product.
   // In "All" view (multi-product only, selectedProductId === null) updates are case-level.
@@ -250,6 +253,11 @@ export default function AdminCaseDetailClient({
             productId={selectedProduct?.id}
             productStage={selectedProduct?.workshop_stage ?? null}
             productName={selectedProduct ? productDisplayName(selectedProduct) : undefined}
+            allProductsReviewed={allProductsReviewed}
+            hasAcceptedProducts={hasAcceptedProducts}
+            creditTerms={customerAccount?.credit_terms ?? false}
+            poRequired={customerAccount?.po_required ?? false}
+            poNumber={poNumber}
             slotBetweenReviewAndStage={
               <SubmissionDetailsCard
                 submissionDetails={submissionDetails}
@@ -417,6 +425,7 @@ export default function AdminCaseDetailClient({
             sapSalesOrder={caseData.sap_sales_order ?? null}
             sapDaysOpen={caseData.sap_days_open ?? null}
             lastImportAt={caseData.last_import_at ?? null}
+            currentStatus={caseData.status}
           />
 
           {/* Attachments */}
@@ -447,12 +456,14 @@ function ProductsCard({
   sapSalesOrder,
   sapDaysOpen,
   lastImportAt,
+  currentStatus,
 }: {
   caseId: string
   products: CaseProductFull[]
   sapSalesOrder: string | null
   sapDaysOpen: number | null
   lastImportAt: string | null
+  currentStatus: string
 }) {
   const router = useRouter()
   // Sales Order inline edit (case-level)
@@ -468,6 +479,57 @@ function ProductsCard({
   const [sapSaving, setSapSaving] = useState(false)
   const [sapError, setSapError] = useState<string | null>(null)
   const [sapForm, setSapForm] = useState<Record<string, string>>({})
+
+  // Accept/reject state
+  const [rejectingId, setRejectingId] = useState<string | null>(null)
+  const [rejectReasonValues, setRejectReasonValues] = useState<Record<string, string>>({})
+  const [reviewSaving, setReviewSaving] = useState<string | null>(null)
+  const [reviewError, setReviewError] = useState<string | null>(null)
+
+  async function acceptProduct(productId: string) {
+    setReviewSaving(productId)
+    setReviewError(null)
+    try {
+      const res = await fetch(`/api/cases/${caseId}/products/${productId}/accept`, {
+        method: 'POST',
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setReviewError(data.message ?? 'Failed to accept product')
+        return
+      }
+      router.refresh()
+    } catch {
+      setReviewError('Failed to accept product')
+    } finally {
+      setReviewSaving(null)
+    }
+  }
+
+  async function rejectProduct(productId: string) {
+    const reason = rejectReasonValues[productId]
+    if (!reason) return
+    setReviewSaving(productId)
+    setReviewError(null)
+    try {
+      const res = await fetch(`/api/cases/${caseId}/products/${productId}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setReviewError(data.message ?? 'Failed to reject product')
+        return
+      }
+      setRejectingId(null)
+      router.refresh()
+    } catch {
+      setReviewError('Failed to reject product')
+    } finally {
+      setReviewSaving(null)
+    }
+  }
 
   async function saveSalesOrder() {
     setSalesOrderSaving(true)
@@ -637,6 +699,11 @@ function ProductsCard({
           {feeError ?? sapError}
         </div>
       )}
+      {reviewError && (
+        <div className="px-4 py-2 bg-red-50 border-b border-red-100 text-[12px] text-red-600">
+          {reviewError}
+        </div>
+      )}
       <div className="divide-y divide-grey-100">
         {products.map((p) => {
           const statusBadge = PRODUCT_STATUS_BADGE[p.status] ?? PRODUCT_STATUS_BADGE.pending
@@ -689,6 +756,81 @@ function ProductsCard({
                   {feeBadge.label}
                 </span>
               </div>
+
+              {/* Accept / Reject controls — shown only during SUBMITTED review for pending products */}
+              {currentStatus === 'SUBMITTED' && p.status === 'pending' && (
+                <div className="mb-3">
+                  {rejectingId === p.id ? (
+                    <div className="border border-red-200 rounded-lg bg-red-50 p-3 space-y-2">
+                      <div className="text-[10px] font-semibold text-red-700 uppercase tracking-[0.06em]">
+                        Select rejection reason
+                      </div>
+                      <select
+                        value={rejectReasonValues[p.id] ?? ''}
+                        onChange={(e) =>
+                          setRejectReasonValues((prev) => ({ ...prev, [p.id]: e.target.value }))
+                        }
+                        className="w-full text-[12px] border border-red-200 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-400"
+                      >
+                        <option value="">— Select a reason —</option>
+                        {REJECTION_REASONS.map((r) => (
+                          <option key={r.value} value={r.label}>
+                            {r.label}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setRejectingId(null)}
+                          className="text-[11px] font-semibold text-grey-500 hover:text-grey-700 px-2.5 py-1 rounded-md border border-grey-200 bg-white"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => rejectProduct(p.id)}
+                          disabled={!rejectReasonValues[p.id] || reviewSaving === p.id}
+                          className="text-[11px] font-semibold text-white bg-red-600 hover:bg-red-700 px-3 py-1 rounded-md transition-colors disabled:opacity-50"
+                        >
+                          {reviewSaving === p.id ? 'Rejecting…' : 'Confirm Rejection'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => acceptProduct(p.id)}
+                        disabled={reviewSaving === p.id}
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-white bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded-md transition-colors disabled:opacity-50"
+                      >
+                        {reviewSaving === p.id ? 'Saving…' : (
+                          <>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="w-3 h-3">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                            Accept
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setRejectingId(p.id)}
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-600 border border-red-200 bg-white hover:bg-red-50 px-3 py-1.5 rounded-md transition-colors"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="w-3 h-3">
+                          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                        Reject
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Show rejection reason on rejected products */}
+              {p.status === 'rejected' && p.rejection_reason && (
+                <div className="mb-3 text-[11px] text-red-600 bg-red-50 border border-red-100 rounded-md px-2.5 py-1.5">
+                  <span className="font-semibold">Rejected: </span>{p.rejection_reason}
+                </div>
+              )}
 
               {/* SAP Data section */}
               <div className="border border-grey-100 rounded-lg overflow-hidden">
