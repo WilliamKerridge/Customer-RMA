@@ -283,7 +283,7 @@ export default function Step3Products({ data, onNext, onBack, products }: Props)
               type="submit"
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold bg-blue text-white hover:bg-blue-light transition-all hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(0,102,204,0.3)]"
             >
-              Continue to Fault Details
+              Next
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="w-3.5 h-3.5">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
