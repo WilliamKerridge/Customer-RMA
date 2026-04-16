@@ -48,6 +48,22 @@ export async function POST(
       return NextResponse.json({ message: 'Case is not in SUBMITTED status' }, { status: 409 })
     }
 
+    // Block RMA issue if any product is still pending review
+    const { data: caseProducts } = await supabase
+      .from('case_products')
+      .select('id, status')
+      .eq('case_id', caseId)
+
+    const hasPendingProducts = (caseProducts ?? []).some(
+      (p) => (p as { status: string }).status === 'pending'
+    )
+    if (hasPendingProducts) {
+      return NextResponse.json(
+        { message: 'All products must be accepted or rejected before issuing the RMA' },
+        { status: 409 }
+      )
+    }
+
     // Generate RMA number
     const { data: rmaData, error: rmaError } = await supabase.rpc('generate_rma_number')
     if (rmaError || !rmaData) {
