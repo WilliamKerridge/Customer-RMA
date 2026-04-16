@@ -133,6 +133,60 @@ export default async function AdminReportsPage() {
     { label: 'In Workshop',      value: pipelineCounts.PARTS_RECEIVED + pipelineCounts.IN_REPAIR + pipelineCounts.QUALITY_CHECK + pipelineCounts.READY_TO_RETURN, colour: 'border-cyan-400' },
   ]
 
+  // ── Query 2: workshop cases with product and hold info
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let workshopQuery: any = supabase
+    .from('cases')
+    .select(`
+      id, case_number, rma_number, status, office, workshop_stage,
+      is_on_hold, hold_reason, hold_customer_label,
+      sap_works_order, sap_estimated_completion, required_return_date,
+      created_at, updated_at,
+      customer_id,
+      case_products(
+        id, workshop_stage, status,
+        products(display_name)
+      )
+    `)
+    .in('status', [...WORKSHOP_STATUSES])
+    .order('created_at', { ascending: true })
+  if (role !== 'admin') workshopQuery = workshopQuery.eq('office', office as 'UK' | 'US')
+  const { data: workshopCases } = await workshopQuery
+
+  // ── Query 3: case_updates for those cases (stage + status transitions)
+  const caseIds = (workshopCases ?? []).map((c: { id: string }) => c.id)
+  const { data: allUpdates } = caseIds.length > 0
+    ? await supabase
+        .from('case_updates')
+        .select('case_id, status_change_to, content, created_at')
+        .in('case_id', caseIds)
+        .order('created_at', { ascending: true })
+    : { data: [] as Array<{ case_id: string | null; status_change_to: string | null; content: string; created_at: string }> }
+
+  // Group updates by case
+  const updatesByCaseId = new Map<string, Array<{ status_change_to: string | null; content: string; created_at: string }>>()
+  for (const u of allUpdates ?? []) {
+    if (!u.case_id) continue
+    const list = updatesByCaseId.get(u.case_id) ?? []
+    list.push({ status_change_to: u.status_change_to, content: u.content, created_at: u.created_at })
+    updatesByCaseId.set(u.case_id, list)
+  }
+
+  // ── Query 4: customer names
+  const customerIds: string[] = [
+    ...new Set<string>(
+      (workshopCases ?? [])
+        .map((c: { customer_id: string | null }) => c.customer_id)
+        .filter((id: string | null): id is string => id !== null)
+    ),
+  ]
+  const { data: customers } = customerIds.length > 0
+    ? await supabase.from('users').select('id, full_name, company').in('id', customerIds)
+    : { data: [] as Array<{ id: string; full_name: string | null; company: string | null }> }
+  const customerMap = new Map((customers ?? []).map((u) => [u.id, u]))
+
+  type WorkshopCase = NonNullable<typeof workshopCases>[number]
+
   return (
     <div className="p-6 max-w-[1400px]">
       {/* Page header */}
@@ -153,9 +207,154 @@ export default async function AdminReportsPage() {
         ))}
       </div>
 
-      {/* Placeholder for Task 3 */}
-      <div className="bg-white rounded-xl border border-grey-200 shadow-sm px-5 py-8 text-center text-[13px] text-grey-400">
-        Workshop table coming in Task 3
+      {/* In-workshop repairs table */}
+      <div className="bg-white rounded-xl border border-grey-200 shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-grey-100 flex items-center justify-between">
+          <h2 className="font-heading text-sm font-semibold text-text">In Workshop</h2>
+          <span className="text-[12px] text-grey-400">{(workshopCases ?? []).length} active</span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-grey-50 border-b border-grey-100">
+                {['Case / RMA', 'Customer', 'Products', 'Stage', 'Days at Stage', 'Total Age', 'Est. Completion', ''].map((h) => (
+                  <th key={h} className="px-4 py-3 text-left text-[10px] font-bold text-grey-400 uppercase tracking-[0.06em] whitespace-nowrap">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {(workshopCases ?? []).map((c: WorkshopCase) => {
+                const customer = c.customer_id ? customerMap.get(c.customer_id) : null
+                const updates = updatesByCaseId.get(c.id) ?? []
+                const timeline = buildCaseTimeline(c.created_at, c.status, c.workshop_stage, updates)
+                const current = timeline[timeline.length - 1]
+                const totalDays = Math.round((Date.now() - new Date(c.created_at).getTime()) / 86_400_000)
+
+                // Product display names (case_products joined to products)
+                const productNames = (c.case_products as Array<{ products: { display_name: string } | null }> | null)
+                  ?.map((cp) => cp.products?.display_name)
+                  .filter(Boolean)
+                  .join(', ') ?? '—'
+
+                const estCompletion = c.sap_estimated_completion ?? c.required_return_date
+                const isOverdue = estCompletion ? new Date(estCompletion).getTime() < Date.now() : false
+
+                return (
+                  <Fragment key={c.id}>
+                    {/* Main row */}
+                    <tr className="border-t border-grey-100 hover:bg-grey-50 transition-colors">
+                      <td className="px-4 pt-3 pb-1 align-top">
+                        <a href={`/admin/cases/${c.id}`} className="block">
+                          <div className="font-mono text-[12px] font-semibold text-blue hover:underline">{c.case_number}</div>
+                          {c.rma_number && (
+                            <div className="font-mono text-[11px] text-grey-400 mt-0.5">{c.rma_number}</div>
+                          )}
+                        </a>
+                      </td>
+
+                      <td className="px-4 pt-3 pb-1 align-top">
+                        <div className="text-[13px] text-text">{customer?.full_name ?? '—'}</div>
+                        {customer?.company && (
+                          <div className="text-[11px] text-grey-400 mt-0.5">{customer.company}</div>
+                        )}
+                        {c.office === 'US' && (
+                          <span className="inline-block mt-1 text-[10px] font-bold text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded-full">US</span>
+                        )}
+                      </td>
+
+                      <td className="px-4 pt-3 pb-1 align-top">
+                        <div className="text-[12px] text-grey-700">{productNames}</div>
+                      </td>
+
+                      <td className="px-4 pt-3 pb-1 align-top">
+                        <div className="text-[12px] font-semibold text-text">{current.label}</div>
+                        {c.is_on_hold && (
+                          <div className="mt-1">
+                            <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full">
+                              On Hold
+                            </span>
+                          </div>
+                        )}
+                      </td>
+
+                      <td className="px-4 pt-3 pb-1 align-top">
+                        <span className={`text-[13px] font-mono ${daysColour(current.days)}`}>
+                          {current.days === 0 ? '< 1d' : `${current.days}d`}
+                        </span>
+                      </td>
+
+                      <td className="px-4 pt-3 pb-1 align-top">
+                        <span className={`text-[13px] font-mono ${totalAgeColour(totalDays)}`}>
+                          {totalDays === 0 ? '< 1d' : `${totalDays}d`}
+                        </span>
+                      </td>
+
+                      <td className="px-4 pt-3 pb-1 align-top">
+                        {estCompletion ? (
+                          <span className={`text-[12px] ${isOverdue ? 'text-red-600 font-semibold' : 'text-grey-600'}`}>
+                            {formatDate(estCompletion)}
+                            {isOverdue && <span className="ml-1 text-[10px] text-red-500">overdue</span>}
+                          </span>
+                        ) : (
+                          <span className="text-[12px] text-grey-300">—</span>
+                        )}
+                      </td>
+
+                      <td className="px-4 pt-3 pb-1 align-top">
+                        <a
+                          href={`/admin/cases/${c.id}`}
+                          className="text-[11px] font-semibold px-2.5 py-1 rounded-md bg-grey-50 text-grey-600 border border-grey-200 hover:bg-grey-100 transition-all"
+                        >
+                          View
+                        </a>
+                      </td>
+                    </tr>
+
+                    {/* Stage history row */}
+                    <tr className="border-b border-grey-100">
+                      <td colSpan={8} className="px-4 pb-3 pt-0">
+                        <div className="flex flex-wrap items-center gap-x-1 gap-y-1">
+                          {timeline.map((entry, i) => (
+                            <span key={i} className="inline-flex items-center gap-1">
+                              {i > 0 && (
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="w-3 h-3 text-grey-300 flex-shrink-0">
+                                  <polyline points="9 18 15 12 9 6" />
+                                </svg>
+                              )}
+                              <span
+                                className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                                  entry.isCurrent
+                                    ? 'bg-blue/10 text-blue border border-blue/20'
+                                    : 'bg-grey-100 text-grey-500'
+                                }`}
+                              >
+                                {entry.label}
+                                <span className={`ml-1 font-mono ${entry.isCurrent ? 'text-blue' : 'text-grey-400'}`}>
+                                  {entry.days === 0 ? '<1d' : `${entry.days}d`}
+                                </span>
+                              </span>
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  </Fragment>
+                )
+              })}
+
+              {(workshopCases ?? []).length === 0 && (
+                <tr>
+                  <td colSpan={8} className="px-4 py-12 text-center text-[13px] text-grey-400">
+                    No cases currently in workshop.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )
