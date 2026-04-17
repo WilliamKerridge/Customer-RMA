@@ -31,8 +31,23 @@ const OPEN_STATUSES = [
 
 type TimelineEntry = {
   label: string
-  days: number
+  days: number       // working days (Mon–Fri), excludes weekends
   isCurrent: boolean
+}
+
+/** Count weekdays (Mon–Fri) between two dates, exclusive of the end date. */
+function workingDaysBetween(start: Date, end: Date): number {
+  let count = 0
+  const cursor = new Date(start)
+  cursor.setHours(0, 0, 0, 0)
+  const endMidnight = new Date(end)
+  endMidnight.setHours(0, 0, 0, 0)
+  while (cursor < endMidnight) {
+    const dow = cursor.getDay() // 0 = Sun, 6 = Sat
+    if (dow !== 0 && dow !== 6) count++
+    cursor.setDate(cursor.getDate() + 1)
+  }
+  return count
 }
 
 function buildCaseTimeline(
@@ -54,7 +69,7 @@ function buildCaseTimeline(
 
   for (const u of transitions) {
     const exitTime = new Date(u.created_at)
-    const days = Math.round((exitTime.getTime() - prevTime.getTime()) / 86_400_000)
+    const days = workingDaysBetween(prevTime, exitTime)
     entries.push({ label: prevLabel, days, isCurrent: false })
 
     if (u.status_change_to) {
@@ -71,7 +86,7 @@ function buildCaseTimeline(
   const currentLabel = currentWorkshopStage
     ? (WorkshopStageLabel[currentWorkshopStage as WorkshopStage] ?? currentWorkshopStage)
     : (STATUS_LABELS[currentStatus] ?? currentStatus)
-  const daysAtCurrent = Math.round((Date.now() - prevTime.getTime()) / 86_400_000)
+  const daysAtCurrent = workingDaysBetween(prevTime, new Date())
   entries.push({ label: currentLabel, days: daysAtCurrent, isCurrent: true })
 
   return entries
@@ -84,8 +99,8 @@ function daysColour(days: number): string {
 }
 
 function totalAgeColour(days: number): string {
-  if (days > 28) return 'text-red-600 font-semibold'
-  if (days > 14) return 'text-amber-700'
+  if (days > 20) return 'text-red-600 font-semibold'
+  if (days > 10) return 'text-amber-700'
   return 'text-grey-600'
 }
 
@@ -220,7 +235,7 @@ export default async function AdminReportsPage() {
           <table className="w-full">
             <thead>
               <tr className="bg-grey-50 border-b border-grey-100">
-                {['Case / RMA', 'Customer', 'Products', 'Stage', 'Days at Stage', 'Total Age', 'Est. Completion', ''].map((h) => (
+                {['Case / RMA', 'Customer', 'Products', 'Stage', 'Working Days at Stage', 'Total Working Days', 'Est. Completion', ''].map((h) => (
                   <th key={h} className="px-4 py-3 text-left text-[10px] font-bold text-grey-400 uppercase tracking-[0.06em] whitespace-nowrap">
                     {h}
                   </th>
@@ -233,7 +248,7 @@ export default async function AdminReportsPage() {
                 const updates = updatesByCaseId.get(c.id) ?? []
                 const timeline = buildCaseTimeline(c.created_at, c.status, c.workshop_stage, updates)
                 const current = timeline[timeline.length - 1]
-                const totalDays = Math.round((Date.now() - new Date(c.created_at).getTime()) / 86_400_000)
+                const totalDays = workingDaysBetween(new Date(c.created_at), new Date())
 
                 // Product display names (case_products joined to products)
                 const productNames = (c.case_products as Array<{ products: { display_name: string } | null }> | null)
@@ -284,13 +299,13 @@ export default async function AdminReportsPage() {
 
                       <td className="px-4 pt-3 pb-1 align-top">
                         <span className={`text-[13px] font-mono ${daysColour(current.days)}`}>
-                          {current.days === 0 ? '< 1d' : `${current.days}d`}
+                          {current.days === 0 ? '< 1wd' : `${current.days}wd`}
                         </span>
                       </td>
 
                       <td className="px-4 pt-3 pb-1 align-top">
                         <span className={`text-[13px] font-mono ${totalAgeColour(totalDays)}`}>
-                          {totalDays === 0 ? '< 1d' : `${totalDays}d`}
+                          {totalDays === 0 ? '< 1wd' : `${totalDays}wd`}
                         </span>
                       </td>
 
@@ -335,7 +350,7 @@ export default async function AdminReportsPage() {
                               >
                                 {entry.label}
                                 <span className={`ml-1 font-mono ${entry.isCurrent ? 'text-blue' : 'text-grey-400'}`}>
-                                  {entry.days === 0 ? '<1d' : `${entry.days}d`}
+                                  {entry.days === 0 ? '<1wd' : `${entry.days}wd`}
                                 </span>
                               </span>
                             </span>
