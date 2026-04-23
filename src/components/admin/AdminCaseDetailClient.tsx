@@ -487,6 +487,23 @@ function ProductsCard({
   const [reviewSaving, setReviewSaving] = useState<string | null>(null)
   const [reviewError, setReviewError] = useState<string | null>(null)
 
+  // Catalog type — shape returned by GET /api/products
+  type CatalogProduct = {
+    id: string
+    part_number: string
+    display_name: string
+    variant: string | null
+    category: string
+  }
+
+  // Product edit — inline correction of customer-submitted fields
+  const [editProductId, setEditProductId]     = useState<string | null>(null)
+  const [editForm, setEditForm]               = useState<{ product_id: string; serial_number: string; quantity: string; fault_notes: string }>({ product_id: '', serial_number: '', quantity: '1', fault_notes: '' })
+  const [editSaving, setEditSaving]           = useState(false)
+  const [editError, setEditError]             = useState<string | null>(null)
+  const [catalogProducts, setCatalogProducts] = useState<CatalogProduct[]>([])
+  const [catalogLoading, setCatalogLoading]   = useState(false)
+
   async function acceptProduct(productId: string) {
     setReviewSaving(productId)
     setReviewError(null)
@@ -556,6 +573,8 @@ function ProductsCard({
   }
 
   function openSapEdit(p: CaseProductFull) {
+    setEditProductId(null)
+    setEditError(null)
     setSapEditId(p.id)
     setSapError(null)
     setSapForm({
@@ -618,6 +637,63 @@ function ProductsCard({
       setFeeError('Failed to update fee basis')
     } finally {
       setFeeSavingId(null)
+    }
+  }
+
+  async function openEditProduct(p: CaseProductFull) {
+    // Close SAP edit if open
+    setSapEditId(null)
+    setSapError(null)
+    setEditProductId(p.id)
+    setEditError(null)
+    setEditForm({
+      product_id:    p.product_id ?? '',
+      serial_number: p.serial_number ?? '',
+      quantity:      String(p.quantity),
+      fault_notes:   p.fault_notes ?? '',
+    })
+    // Lazy-load catalog
+    if (catalogProducts.length === 0) {
+      setCatalogLoading(true)
+      try {
+        const res = await fetch('/api/products?active=true')
+        const data = await res.json()
+        setCatalogProducts((data.products ?? []) as CatalogProduct[])
+      } catch {
+        setEditError('Failed to load product list')
+      } finally {
+        setCatalogLoading(false)
+      }
+    }
+  }
+
+  async function saveEditProduct(productId: string) {
+    setEditSaving(true)
+    setEditError(null)
+    try {
+      const body: Record<string, unknown> = {
+        serial_number: editForm.serial_number.trim() || null,
+        quantity:      Math.max(1, parseInt(editForm.quantity, 10) || 1),
+        fault_notes:   editForm.fault_notes.trim() || null,
+      }
+      if (editForm.product_id) body.product_id = editForm.product_id
+
+      const res = await fetch(`/api/cases/${caseId}/products/${productId}/edit`, {
+        method:  'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(body),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setEditError(data.message ?? 'Failed to save')
+        return
+      }
+      setEditProductId(null)
+      router.refresh()
+    } catch {
+      setEditError('Failed to save')
+    } finally {
+      setEditSaving(false)
     }
   }
 
@@ -730,10 +806,140 @@ function ProductsCard({
                     )}
                   </div>
                 </div>
-                <span className={`flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${statusBadge.className}`}>
-                  {statusBadge.label}
-                </span>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {editProductId !== p.id ? (
+                    <button
+                      onClick={() => openEditProduct(p)}
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue hover:text-blue-light transition-colors"
+                      title="Correct product details"
+                    >
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                      Edit
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => { setEditProductId(null); setEditError(null) }}
+                      className="text-[11px] font-semibold text-grey-500 hover:text-grey-700"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusBadge.className}`}>
+                    {statusBadge.label}
+                  </span>
+                </div>
               </div>
+
+              {/* Inline edit panel — correct customer-submitted details */}
+              {editProductId === p.id && (
+                <div className="border border-blue/20 rounded-lg bg-blue/5 p-3 mb-3 space-y-3">
+                  <div className="text-[10px] font-semibold text-blue uppercase tracking-[0.06em]">
+                    Correct Product Details
+                  </div>
+
+                  {/* Product selector */}
+                  <div>
+                    <label className="block text-[10px] font-semibold text-grey-500 uppercase tracking-[0.05em] mb-1">
+                      Product
+                    </label>
+                    {catalogLoading ? (
+                      <div className="text-[12px] text-grey-400">Loading products…</div>
+                    ) : (
+                      <select
+                        value={editForm.product_id}
+                        onChange={(e) => setEditForm((f) => ({ ...f, product_id: e.target.value }))}
+                        className="w-full text-[12px] border border-grey-200 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue/30 focus:border-blue"
+                      >
+                        <option value="">— Select product —</option>
+                        {Object.entries(
+                          catalogProducts.reduce<Record<string, CatalogProduct[]>>((acc, prod) => {
+                            const cat = prod.category ?? 'Other'
+                            if (!acc[cat]) acc[cat] = []
+                            acc[cat].push(prod)
+                            return acc
+                          }, {})
+                        )
+                          .sort(([a], [b]) => a.localeCompare(b))
+                          .map(([cat, prods]) => (
+                            <optgroup key={cat} label={cat}>
+                              {prods.map((prod) => (
+                                <option key={prod.id} value={prod.id}>
+                                  {prod.display_name}{prod.variant ? ` ${prod.variant}` : ''} ({prod.part_number})
+                                </option>
+                              ))}
+                            </optgroup>
+                          ))}
+                      </select>
+                    )}
+                  </div>
+
+                  {/* Serial number + quantity side by side */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[10px] font-semibold text-grey-500 uppercase tracking-[0.05em] mb-1">
+                        Serial Number
+                      </label>
+                      <input
+                        type="text"
+                        value={editForm.serial_number}
+                        onChange={(e) => setEditForm((f) => ({ ...f, serial_number: e.target.value }))}
+                        placeholder="e.g. CEL-20250112"
+                        className="w-full text-[12px] font-mono border border-grey-200 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue/30 focus:border-blue"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-semibold text-grey-500 uppercase tracking-[0.05em] mb-1">
+                        Quantity
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="99"
+                        value={editForm.quantity}
+                        onChange={(e) => setEditForm((f) => ({ ...f, quantity: e.target.value }))}
+                        className="w-full text-[12px] border border-grey-200 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue/30 focus:border-blue"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Fault notes */}
+                  <div>
+                    <label className="block text-[10px] font-semibold text-grey-500 uppercase tracking-[0.05em] mb-1">
+                      Fault Notes
+                    </label>
+                    <textarea
+                      value={editForm.fault_notes}
+                      onChange={(e) => setEditForm((f) => ({ ...f, fault_notes: e.target.value }))}
+                      rows={3}
+                      placeholder="Customer-reported fault description…"
+                      className="w-full text-[12px] border border-grey-200 rounded-md px-2 py-1.5 resize-none focus:outline-none focus:ring-2 focus:ring-blue/30 focus:border-blue"
+                    />
+                  </div>
+
+                  {editError && (
+                    <p className="text-[11px] text-red-600">{editError}</p>
+                  )}
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => { setEditProductId(null); setEditError(null) }}
+                      className="text-[11px] font-semibold text-grey-500 hover:text-grey-700 px-2.5 py-1 rounded-md border border-grey-200 bg-white"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => saveEditProduct(p.id)}
+                      disabled={editSaving}
+                      className="text-[11px] font-semibold text-white bg-blue hover:bg-blue-light px-3 py-1 rounded-md transition-colors disabled:opacity-50"
+                    >
+                      {editSaving ? 'Saving…' : 'Save Changes'}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Fee Basis */}
               <div className="flex items-center gap-2 mb-3">
