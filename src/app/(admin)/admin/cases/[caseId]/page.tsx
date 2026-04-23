@@ -56,7 +56,7 @@ export default async function AdminCaseDetailPage({ params }: Props) {
   const fullProductsQuery = await supabase
     .from('case_products')
     .select(`
-      id, serial_number, quantity, fault_notes, status, rejection_reason,
+      id, product_id, serial_number, quantity, fault_notes, status, rejection_reason,
       workshop_stage, workshop_findings, staff_notes,
       sap_works_order, sap_estimated_completion, sap_order_value, sap_spent_hours,
       fee_basis,

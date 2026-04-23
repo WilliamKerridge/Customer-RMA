@@ -11,6 +11,7 @@ import { REJECTION_REASONS } from '@/lib/rejection-reasons'
 
 export interface CaseProductFull {
   id: string
+  product_id: string | null
   serial_number: string | null
   quantity: number
   fault_notes: string | null
