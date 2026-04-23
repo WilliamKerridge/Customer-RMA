@@ -44,6 +44,9 @@ export async function PATCH(
     if (!targetProduct) {
       return NextResponse.json({ message: 'Product not found' }, { status: 400 })
     }
+    if (!targetProduct.active) {
+      return NextResponse.json({ message: 'Product is no longer active' }, { status: 400 })
+    }
   }
 
   const updates: Record<string, unknown> = {}
