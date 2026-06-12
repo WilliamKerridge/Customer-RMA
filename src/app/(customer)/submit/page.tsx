@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
+import { createUserScopedClient } from '@/lib/supabase/with-auth'
 import RMASubmitForm from '@/components/forms/RMASubmitForm'
 import type { CustomerAccountRow } from '@/types/database'
 
@@ -18,15 +19,20 @@ export default async function SubmitPage() {
   // Get current user (optional — /submit is public)
   const session = await auth.api.getSession({ headers: await headers() })
 
-  // If authenticated, fetch the customer account for PO/credit terms
+  // If authenticated, fetch the customer account for PO/credit terms.
+  // customer_accounts.user_id is the public.users UUID — better-auth session
+  // IDs never match it, so resolve the canonical UUID by email first.
   let account: CustomerAccountRow | null = null
   if (session?.user) {
-    const { data } = await supabase
-      .from('customer_accounts')
-      .select('*')
-      .eq('user_id', session.user.id)
-      .single()
-    account = data
+    const { supabase: scoped, userId } = await createUserScopedClient(session.user.email)
+    if (userId) {
+      const { data } = await scoped
+        .from('customer_accounts')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
+      account = data
+    }
   }
 
   const initialUser = session?.user

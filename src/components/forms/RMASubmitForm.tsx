@@ -7,7 +7,6 @@ import Step2Office, { type Step2Data } from './steps/Step2Office'
 import Step3Products, { type Step3Data } from './steps/Step3Products'
 import Step4Fault, { type Step4Data, type SelectedProduct } from './steps/Step4Fault'
 import Step5Review, { type RMAFormData } from './steps/Step5Review'
-import { createClient } from '@/lib/supabase/client'
 import type { ProductRow, CustomerAccountRow } from '@/types/database'
 
 export type { RMAFormData }
@@ -198,10 +197,12 @@ export default function RMASubmitForm({ products, initialUser, account }: Props)
       // (DB stores one set of these per case; if mixed types, repair fields take priority)
       const primaryPF = product_faults[0]
 
-      const response = await fetch('/api/cases', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      // Submit payload + evidence files in one multipart request — the server
+      // validates the files and registers them in case_attachments
+      const submission = new FormData()
+      submission.append(
+        'payload',
+        JSON.stringify({
           contact: formData.step1,
           office: formData.step2.office,
           required_return_date: formData.step2.required_return_date,
@@ -213,8 +214,13 @@ export default function RMASubmitForm({ products, initialUser, account }: Props)
           tested_other_unit: primaryPF?.tested_other_unit ?? false,
           fault_follows: primaryPF?.fault_follows ?? null,
           fault_description: combinedFaultDescription,
-        }),
-      })
+        })
+      )
+      for (const file of formData.step3.files) {
+        submission.append('files', file)
+      }
+
+      const response = await fetch('/api/cases', { method: 'POST', body: submission })
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({ message: 'Submission failed' }))
@@ -224,34 +230,6 @@ export default function RMASubmitForm({ products, initialUser, account }: Props)
       const { case_id, case_number } = (await response.json()) as {
         case_id: string
         case_number: string
-      }
-
-      // 2. Upload files to Supabase Storage (if any)
-      if (formData.step3.files.length > 0) {
-        const supabase = createClient()
-        const uploadPromises = formData.step3.files.map(async (file) => {
-          const path = `${case_id}/${Date.now()}_${file.name}`
-          const { error } = await supabase.storage
-            .from('case-attachments')
-            .upload(path, file, { cacheControl: '3600' })
-
-          if (error) {
-            console.error('File upload failed:', file.name, error.message)
-            return null
-          }
-          return { file_name: file.name, storage_path: path, file_size: file.size, mime_type: file.type }
-        })
-
-        const uploaded = (await Promise.all(uploadPromises)).filter(Boolean)
-
-        // 3. Register attachment records
-        if (uploaded.length > 0) {
-          await fetch(`/api/cases/${case_id}/attachments`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ attachments: uploaded }),
-          }).catch((e) => console.error('Attachment registration failed:', e))
-        }
       }
 
       router.push(

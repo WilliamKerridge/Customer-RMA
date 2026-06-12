@@ -51,7 +51,17 @@ export async function POST(
       if (!session?.user) {
         return NextResponse.json({ message: 'Authentication required' }, { status: 401 })
       }
-      authorId = session.user.id
+      // Resolve the canonical public.users UUID by email — better-auth session
+      // IDs are TEXT and never match our UUID customer_id column.
+      const { data: profile } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', session.user.email)
+        .single()
+      authorId = (profile as { id: string } | null)?.id ?? null
+      if (!authorId) {
+        return NextResponse.json({ message: 'Case not found' }, { status: 404 })
+      }
       authorName = session.user.name ?? 'Customer'
     }
 
@@ -66,8 +76,10 @@ export async function POST(
       return NextResponse.json({ message: 'Case not found' }, { status: 404 })
     }
 
-    // If session-based, ensure customer owns the case (return 404 to not reveal existence)
-    if (authorId && caseRow.customer_id && caseRow.customer_id !== authorId) {
+    // Session-based access requires ownership. Guest-submitted cases
+    // (customer_id null) can only be answered via the emailed token.
+    // Return 404 to not reveal the case exists.
+    if (!token && caseRow.customer_id !== authorId) {
       return NextResponse.json({ message: 'Case not found' }, { status: 404 })
     }
 

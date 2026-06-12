@@ -33,16 +33,16 @@ export default async function PaymentPage({ params }: Props) {
 
   if (!caseRow) redirect('/cases')
 
-  // Verify this is the customer's own case
-  if (caseRow.customer_id) {
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', session.user.email)
-      .single()
-    const userId = (userProfile as { id: string } | null)?.id
-    if (userId && caseRow.customer_id !== userId) redirect('/cases')
-  }
+  // Verify this is the customer's own case — fail closed if the profile lookup
+  // misses. Guest-submitted cases (customer_id null) have no owner to verify;
+  // payment for those is arranged offline, so they are not viewable here.
+  const { data: userProfile } = await supabase
+    .from('users')
+    .select('id')
+    .eq('email', session.user.email)
+    .single()
+  const userId = (userProfile as { id: string } | null)?.id
+  if (!userId || !caseRow.customer_id || caseRow.customer_id !== userId) redirect('/cases')
 
   // Already paid — redirect back to case
   if (['paid', 'waived', 'invoiced'].includes(caseRow.payment_status)) {

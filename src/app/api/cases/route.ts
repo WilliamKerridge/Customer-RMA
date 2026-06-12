@@ -14,6 +14,23 @@ const productSchema = z.object({
   fault_notes: z.string().optional(),
 })
 
+// Mirrors the limits advertised on the wizard's upload step
+const MAX_FILES = 10
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
+const ALLOWED_EXTENSIONS = ['pdf', 'txt', 'log', 'csv', 'xlsx', 'xls', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'heic', 'bmp']
+
+function validateFiles(files: File[]): string | null {
+  if (files.length > MAX_FILES) return `A maximum of ${MAX_FILES} files can be attached`
+  for (const file of files) {
+    if (file.size > MAX_FILE_SIZE) return `${file.name} exceeds the 10 MB file size limit`
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
+    if (!ALLOWED_EXTENSIONS.includes(ext) && !file.type.startsWith('image/')) {
+      return `${file.name} is not an accepted file type`
+    }
+  }
+  return null
+}
+
 const submissionSchema = z.object({
   contact: z.object({
     full_name: z.string().min(1, 'Full name is required'),
@@ -39,7 +56,26 @@ const submissionSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    // Multipart carries the JSON payload in a 'payload' field plus attachment
+    // files; plain JSON bodies (no attachments) are also accepted.
+    let body: unknown
+    let files: File[] = []
+    if (request.headers.get('content-type')?.includes('multipart/form-data')) {
+      const formData = await request.formData()
+      try {
+        body = JSON.parse(String(formData.get('payload') ?? ''))
+      } catch {
+        return NextResponse.json({ message: 'Invalid submission payload' }, { status: 400 })
+      }
+      files = formData.getAll('files').filter((f): f is File => f instanceof File)
+      const fileError = validateFiles(files)
+      if (fileError) {
+        return NextResponse.json({ message: fileError }, { status: 400 })
+      }
+    } else {
+      body = await request.json()
+    }
+
     const parsed = submissionSchema.safeParse(body)
 
     if (!parsed.success) {
@@ -143,6 +179,41 @@ export async function POST(request: NextRequest) {
     if (productsError) {
       // Case was created — log but don't fail the request
       console.error('case_products insert failed:', productsError)
+    }
+
+    // Store attachments server-side so they are size/type-validated and always
+    // registered in case_attachments (guests have no session to do this later)
+    for (const file of files) {
+      const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+      const storagePath = `${newCase.id}/${Date.now()}-${safeFileName}`
+      const buffer = Buffer.from(await file.arrayBuffer())
+
+      const { error: uploadError } = await supabase.storage
+        .from('case-attachments')
+        .upload(storagePath, buffer, {
+          contentType: file.type || 'application/octet-stream',
+          upsert: false,
+        })
+
+      if (uploadError) {
+        // Case was created — log but don't fail the submission over an attachment
+        console.error('Attachment upload failed:', file.name, uploadError)
+        continue
+      }
+
+      const { error: attachmentError } = await supabase.from('case_attachments').insert({
+        case_id: newCase.id,
+        uploaded_by: userId,
+        file_name: file.name,
+        storage_path: storagePath,
+        file_size: file.size,
+        mime_type: file.type || null,
+      })
+
+      if (attachmentError) {
+        console.error('case_attachments insert failed:', file.name, attachmentError)
+        await supabase.storage.from('case-attachments').remove([storagePath])
+      }
     }
 
     // Initiate payment if required (non-blocking for stub mode)

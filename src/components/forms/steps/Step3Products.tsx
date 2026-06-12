@@ -45,8 +45,11 @@ function groupByCategory(
   }, {})
 }
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB — enforced server-side too
+
 export default function Step3Products({ data, onNext, onBack, products }: Props) {
   const [files, setFiles] = useState<File[]>(data.files)
+  const [fileError, setFileError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
@@ -66,8 +69,15 @@ export default function Step3Products({ data, onNext, onBack, products }: Props)
 
   function handleFilePick(e: React.ChangeEvent<HTMLInputElement>) {
     const picked = Array.from(e.target.files ?? [])
+    const oversized = picked.filter((f) => f.size > MAX_FILE_SIZE)
+    const accepted = picked.filter((f) => f.size <= MAX_FILE_SIZE)
+    setFileError(
+      oversized.length > 0
+        ? `${oversized.map((f) => f.name).join(', ')} exceed${oversized.length === 1 ? 's' : ''} the 10MB limit`
+        : null
+    )
     setFiles((prev) => {
-      const combined = [...prev, ...picked]
+      const combined = [...prev, ...accepted]
       return combined.slice(0, 10) // max 10 files
     })
   }
@@ -237,6 +247,10 @@ export default function Step3Products({ data, onNext, onBack, products }: Props)
             className="hidden"
             onChange={handleFilePick}
           />
+
+          {fileError && (
+            <p className="mt-2 text-[12px] text-red-600">{fileError}</p>
+          )}
 
           {/* Selected files */}
           {files.length > 0 && (
