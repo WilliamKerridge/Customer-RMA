@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
 import { createUserScopedClient } from '@/lib/supabase/with-auth'
 import CaseListClient from './CaseListClient'
+import type { CustomerCaseSummary } from '@/types/database'
 
 export default async function CasesPage() {
   const session = await auth.api.getSession({ headers: await headers() })
@@ -26,18 +27,29 @@ export default async function CasesPage() {
     .eq('customer_id', userId)
     .order('created_at', { ascending: false })
 
-  // Flatten: attach first product name to each case
+  // Map to an explicit customer-safe DTO. Internal fields (hold_reason, SAP
+  // financials, awaiting_customer_question) must never cross into client
+  // components — they would be serialized into the RSC payload (CLAUDE.md rules 1 & 5).
   type RawCase = typeof cases extends (infer T)[] | null ? T : never
-  const enriched = (cases ?? []).map((c: RawCase) => {
+  const enriched = (cases ?? []).map((c: RawCase): CustomerCaseSummary => {
     const cp = (c as { case_products?: { products?: { display_name: string; variant: string | null } | null }[] }).case_products?.[0]
     const product_name = cp?.products
       ? `${cp.products.display_name}${cp.products.variant ? ` ${cp.products.variant}` : ''}`
       : null
-    const clientCase = { ...c, product_name } as typeof c & { product_name: string | null }
-    // SAP financial data is staff-only — strip before passing to client component (CLAUDE.md rule 5)
-    delete (clientCase as Record<string, unknown>).sap_order_value
-    delete (clientCase as Record<string, unknown>).sap_spent_hours
-    return clientCase
+    return {
+      id: c.id,
+      case_number: c.case_number,
+      rma_number: c.rma_number,
+      status: c.status,
+      fault_type: c.fault_type,
+      required_return_date: c.required_return_date,
+      created_at: c.created_at,
+      is_on_hold: c.is_on_hold,
+      hold_customer_label: c.hold_customer_label,
+      workshop_stage: c.workshop_stage,
+      is_action_required: c.is_on_hold && c.hold_reason === 'AWAITING_CUSTOMER',
+      product_name,
+    }
   })
 
   return (

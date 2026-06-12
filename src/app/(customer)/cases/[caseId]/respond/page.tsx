@@ -91,7 +91,7 @@ export default async function TokenisedRespondPage({ params, searchParams }: Pro
           </div>
         ) : (
           <HoldStateBanner
-            holdReason={caseRow.hold_reason ?? ''}
+            isActionRequired={caseRow.hold_reason === 'AWAITING_CUSTOMER'}
             holdCustomerLabel={caseRow.hold_customer_label ?? ''}
             awaitingCustomerQuestion={caseRow.awaiting_customer_question}
             caseId={caseId}

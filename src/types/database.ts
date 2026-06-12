@@ -545,6 +545,27 @@ export type UpdateTables<T extends keyof Database['public']['Tables']> =
 
 export type UserRow = Tables<'users'>
 export type CaseRow = Tables<'cases'>
+
+// Customer-facing case summary — an explicit allowlist of fields that are safe
+// to serialize into client components. Internal fields (hold_reason, SAP
+// financials, awaiting_customer_question, assigned_to) must never be added here.
+export type CustomerCaseSummary = Pick<
+  CaseRow,
+  | 'id'
+  | 'case_number'
+  | 'rma_number'
+  | 'status'
+  | 'fault_type'
+  | 'required_return_date'
+  | 'created_at'
+  | 'is_on_hold'
+  | 'hold_customer_label'
+  | 'workshop_stage'
+> & {
+  is_action_required: boolean
+  product_name: string | null
+}
+
 export type ProductRow = Tables<'products'>
 export type CaseProductRow = Tables<'case_products'>
 export type CaseUpdateRow = Tables<'case_updates'>

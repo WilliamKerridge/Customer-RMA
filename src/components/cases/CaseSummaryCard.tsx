@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import type { CaseRow } from '@/types/database'
+import type { CustomerCaseSummary } from '@/types/database'
 
 const STATUS_ORDER = [
   'SUBMITTED',
@@ -76,13 +76,12 @@ function formatDate(iso: string | null) {
 }
 
 interface Props {
-  case_: CaseRow & { product_name?: string | null }
+  case_: CustomerCaseSummary
 }
 
 export default function CaseSummaryCard({ case_ }: Props) {
-  const isActionRequired =
-    case_.is_on_hold && case_.hold_reason === 'AWAITING_CUSTOMER'
-  const isOnHold = case_.is_on_hold && case_.hold_reason !== 'AWAITING_CUSTOMER'
+  const isActionRequired = case_.is_action_required
+  const isOnHold = case_.is_on_hold && !case_.is_action_required
   const workshopLabel =
     case_.status === 'IN_REPAIR' && case_.workshop_stage
       ? WORKSHOP_STAGE_LABELS[case_.workshop_stage] ?? case_.workshop_stage

@@ -130,7 +130,7 @@ export default async function CaseDetailPage({ params }: Props) {
             {/* Hold banners */}
             {caseData.is_on_hold && (
               <HoldStateBanner
-                holdReason={caseData.hold_reason ?? ''}
+                isActionRequired={caseData.hold_reason === 'AWAITING_CUSTOMER'}
                 holdCustomerLabel={caseData.hold_customer_label ?? ''}
                 awaitingCustomerQuestion={caseData.awaiting_customer_question}
                 caseId={caseId}

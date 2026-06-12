@@ -2,17 +2,15 @@
 
 import { useState } from 'react'
 import CaseSummaryCard from '@/components/cases/CaseSummaryCard'
-import type { CaseRow } from '@/types/database'
+import type { CustomerCaseSummary } from '@/types/database'
 
 const OPEN_STATUSES = ['SUBMITTED', 'UNDER_REVIEW', 'AWAITING_PAYMENT', 'RMA_ISSUED', 'PARTS_RECEIVED', 'IN_REPAIR', 'QUALITY_CHECK', 'READY_TO_RETURN']
 const CLOSED_STATUSES = ['CLOSED', 'REJECTED']
 const TABS = ['All', 'Open', 'On Hold', 'Closed'] as const
 type Tab = (typeof TABS)[number]
 
-type EnrichedCase = CaseRow & { product_name?: string | null }
-
 interface Props {
-  cases: EnrichedCase[]
+  cases: CustomerCaseSummary[]
 }
 
 export default function CaseListClient({ cases }: Props) {

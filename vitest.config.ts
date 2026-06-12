@@ -7,7 +7,8 @@ export default defineConfig({
     globals: true,
     setupFiles: ['src/tests/setup.ts'],
     include: ['src/tests/unit/**/*.test.ts', 'src/tests/unit/**/*.test.tsx',
-              'src/tests/integration/**/*.test.ts'],
+              'src/tests/integration/**/*.test.ts',
+              'src/tests/security/**/*.test.ts'],
     exclude: ['src/tests/e2e/**', 'node_modules/**', '.next/**'],
     coverage: {
       provider: 'v8',

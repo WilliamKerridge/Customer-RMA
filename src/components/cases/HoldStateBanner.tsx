@@ -3,7 +3,8 @@
 import { useState } from 'react'
 
 interface Props {
-  holdReason: string
+  // Computed server-side — the internal hold_reason enum must never reach the client
+  isActionRequired: boolean
   holdCustomerLabel: string
   awaitingCustomerQuestion: string | null
   caseId: string
@@ -12,7 +13,7 @@ interface Props {
 }
 
 export default function HoldStateBanner({
-  holdReason,
+  isActionRequired,
   holdCustomerLabel,
   awaitingCustomerQuestion,
   caseId,
@@ -23,8 +24,6 @@ export default function HoldStateBanner({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const isActionRequired = holdReason === 'AWAITING_CUSTOMER'
 
   async function handleSendResponse() {
     if (response.trim().length < 3) {
