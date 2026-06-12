@@ -14,17 +14,29 @@ const productSchema = z.object({
   fault_notes: z.string().optional(),
 })
 
-// Mirrors the limits advertised on the wizard's upload step
+// Mirrors the limits advertised on the wizard's upload step; extensions match
+// the case-attachments bucket's allowed_mime_types (004_storage_buckets.sql)
 const MAX_FILES = 10
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
-const ALLOWED_EXTENSIONS = ['pdf', 'txt', 'log', 'csv', 'xlsx', 'xls', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'heic', 'bmp']
+const ALLOWED_EXTENSIONS = ['pdf', 'txt', 'log', 'csv', 'xlsx', 'xls', 'png', 'jpg', 'jpeg', 'gif', 'webp']
+
+// Browsers report an empty MIME type for .log and sometimes .csv/.txt files;
+// the storage bucket rejects unknown content types, so map by extension
+const EXTENSION_MIME: Record<string, string> = {
+  log: 'text/plain',
+  txt: 'text/plain',
+  csv: 'text/csv',
+}
+
+function fileExtension(name: string): string {
+  return name.split('.').pop()?.toLowerCase() ?? ''
+}
 
 function validateFiles(files: File[]): string | null {
   if (files.length > MAX_FILES) return `A maximum of ${MAX_FILES} files can be attached`
   for (const file of files) {
     if (file.size > MAX_FILE_SIZE) return `${file.name} exceeds the 10 MB file size limit`
-    const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
-    if (!ALLOWED_EXTENSIONS.includes(ext) && !file.type.startsWith('image/')) {
+    if (!ALLOWED_EXTENSIONS.includes(fileExtension(file.name))) {
       return `${file.name} is not an accepted file type`
     }
   }
@@ -191,7 +203,7 @@ export async function POST(request: NextRequest) {
       const { error: uploadError } = await supabase.storage
         .from('case-attachments')
         .upload(storagePath, buffer, {
-          contentType: file.type || 'application/octet-stream',
+          contentType: file.type || EXTENSION_MIME[fileExtension(file.name)] || 'application/octet-stream',
           upsert: false,
         })
 
