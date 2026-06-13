@@ -28,14 +28,22 @@ export async function POST(request: NextRequest) {
     const caseId = intent.metadata?.caseId
 
     if (caseId) {
-      // Update payment status to 'paid'
       const { data: caseRow } = await supabase
         .from('cases')
-        .select('id, status, case_number, customer_id')
+        .select('id, status, case_number, customer_id, payment_status, stripe_payment_intent_id')
         .eq('id', caseId)
         .single()
 
-      if (caseRow) {
+      // Verify the event's intent matches the one we created for this case —
+      // guards against a mismatched/forged metadata.caseId.
+      if (caseRow && caseRow.stripe_payment_intent_id && caseRow.stripe_payment_intent_id !== intent.id) {
+        console.error(`Webhook: intent ${intent.id} does not match case ${caseId} stored intent`)
+        return NextResponse.json({ received: true }, { status: 200 })
+      }
+
+      // Idempotency: Stripe re-delivers events. If already marked paid, do
+      // nothing so we don't insert duplicate timeline rows.
+      if (caseRow && caseRow.payment_status !== 'paid') {
         const updates: Record<string, string> = { payment_status: 'paid' }
 
         // Advance status from AWAITING_PAYMENT to UNDER_REVIEW

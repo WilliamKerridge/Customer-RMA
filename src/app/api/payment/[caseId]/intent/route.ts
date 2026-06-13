@@ -29,9 +29,16 @@ export async function POST(
       .select('id')
       .eq('email', session.user.email)
       .single()
+    // Fail closed: only the owning customer may create an intent. Return 404
+    // (not 403) so we don't reveal the case exists to non-owners.
     const userId = (userProfile as { id: string } | null)?.id
-    if (userId && caseRow.customer_id && caseRow.customer_id !== userId) {
+    if (!userId || caseRow.customer_id !== userId) {
       return NextResponse.json({ message: 'Case not found' }, { status: 404 })
+    }
+
+    // Stub mode must never make Stripe calls (read from env only, never body).
+    if (process.env.PAYMENT_MODE !== 'stripe') {
+      return NextResponse.json({ message: 'Payment is arranged offline', stub: true }, { status: 409 })
     }
 
     if (!process.env.STRIPE_SECRET_KEY) {
