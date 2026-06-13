@@ -1,25 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
-import { auth } from '@/lib/auth'
-import { headers } from 'next/headers'
+import { requireStaff, canAccessOffice, type StaffContext } from '@/lib/auth-helpers'
 
 const BUCKET = 'case-attachments'
 
-async function requireStaff() {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) return null
-
+// Confirms the staff member may act on this case's office; returns the office
+// or null if access is denied / the case doesn't exist.
+async function authoriseCaseOffice(user: StaffContext, caseId: string): Promise<boolean | null> {
   const supabase = createServiceClient()
-  const { data } = await supabase
-    .from('users')
-    .select('id, role')
-    .eq('email', session.user.email)
-    .single()
-
-  const profile = data as { id: string; role: string } | null
-  if (!profile || !['staff_uk', 'staff_us', 'admin'].includes(profile.role)) return null
-
-  return { ...session.user, canonicalId: profile.id }
+  const { data: caseRow } = await supabase
+    .from('cases').select('office').eq('id', caseId).single()
+  if (!caseRow) return null
+  return canAccessOffice(user, caseRow.office)
 }
 
 // GET — list attachments for a case with signed download URLs
@@ -32,6 +24,10 @@ export async function GET(
     if (!user) return NextResponse.json({ message: 'Unauthorised' }, { status: 403 })
 
     const { caseId } = await params
+    const allowed = await authoriseCaseOffice(user, caseId)
+    if (allowed === null) return NextResponse.json({ message: 'Case not found' }, { status: 404 })
+    if (!allowed) return NextResponse.json({ message: 'This case belongs to another office queue' }, { status: 403 })
+
     const supabase = createServiceClient()
 
     const { data: attachments, error } = await supabase
@@ -72,16 +68,11 @@ export async function POST(
     if (!user) return NextResponse.json({ message: 'Unauthorised' }, { status: 403 })
 
     const { caseId } = await params
+    const allowed = await authoriseCaseOffice(user, caseId)
+    if (allowed === null) return NextResponse.json({ message: 'Case not found' }, { status: 404 })
+    if (!allowed) return NextResponse.json({ message: 'This case belongs to another office queue' }, { status: 403 })
+
     const supabase = createServiceClient()
-
-    // Verify case exists
-    const { data: caseRow } = await supabase
-      .from('cases')
-      .select('id')
-      .eq('id', caseId)
-      .single()
-
-    if (!caseRow) return NextResponse.json({ message: 'Case not found' }, { status: 404 })
 
     const formData = await request.formData()
     const file = formData.get('file') as File | null

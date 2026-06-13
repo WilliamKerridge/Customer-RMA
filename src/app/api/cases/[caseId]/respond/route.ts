@@ -68,7 +68,7 @@ export async function POST(
     // ── Verify case is in AWAITING_CUSTOMER hold ─────────────────────────────
     const { data: caseRow } = await supabase
       .from('cases')
-      .select('id, is_on_hold, hold_reason, customer_id, case_number')
+      .select('id, is_on_hold, hold_reason, customer_id, case_number, office')
       .eq('id', caseId)
       .single()
 
@@ -127,22 +127,15 @@ export async function POST(
     }
 
     // ── Notify staff of customer response ────────────────────────────────────
-    // Find staff who should be notified (office-matched staff_uk/staff_us + admin)
-    const { data: staffUsers } = await supabase
-      .from('users')
-      .select('email, full_name')
-      .in('role', ['staff_uk', 'staff_us', 'admin'])
-
-    if (staffUsers && staffUsers.length > 0) {
-      // Get customer name for the notification
-      const customerDisplayName = authorName !== 'Customer' ? authorName : 'Customer'
-      const firstStaff = staffUsers[0] as { email: string; full_name: string | null }
-      const notifyEmail = process.env.UK_RETURNS_EMAIL ?? firstStaff.email
-
+    // Route to the office inbox that owns the case (CLAUDE.md office routing).
+    const notifyEmail = caseRow.office === 'US'
+      ? process.env.US_SALES_EMAIL
+      : process.env.UK_RETURNS_EMAIL
+    if (notifyEmail) {
       sendCustomerResponseReceived(caseId, notifyEmail, {
         staffName: 'Team',
         caseNumber: caseRow.case_number,
-        customerName: customerDisplayName,
+        customerName: authorName !== 'Customer' ? authorName : 'Customer',
         responseContent: response,
       })
     }

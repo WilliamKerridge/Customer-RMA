@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/service'
-import { auth } from '@/lib/auth'
-import { headers } from 'next/headers'
+import { requireStaff } from '@/lib/auth-helpers'
 
 const patchSchema = z.object({
   part_number: z.string().min(1).optional(),
@@ -17,23 +16,6 @@ const patchSchema = z.object({
   notes: z.string().nullable().optional(),
   tariff_code: z.string().nullable().optional(),
 })
-
-async function requireStaff() {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) return null
-
-  const supabase = createServiceClient()
-  const { data } = await supabase
-    .from('users')
-    .select('id, role')
-    .eq('email', session.user.email)
-    .single()
-
-  const profile = data as { id: string; role: string } | null
-  if (!profile || !['staff_uk', 'staff_us', 'admin'].includes(profile.role)) return null
-
-  return { ...session.user, canonicalId: profile.id, role: profile.role }
-}
 
 // GET — single product
 export async function GET(

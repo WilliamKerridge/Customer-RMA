@@ -1,37 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/service'
-import { auth } from '@/lib/auth'
-import { headers } from 'next/headers'
+import { requireStaff, canAccessOffice } from '@/lib/auth-helpers'
 import { sendCaseRejected } from '@/lib/email'
 
 const bodySchema = z.object({
   reason: z.string().min(3, 'Reason must be at least 3 characters'),
 })
 
-async function requireStaff(request: NextRequest) {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) return null
-
-  const supabase = createServiceClient()
-  const { data } = await supabase
-    .from('users')
-    .select('id, role')
-    .eq('email', session.user.email)
-    .single()
-
-  const profile = data as { id: string; role: string } | null
-  if (!profile || !['staff_uk', 'staff_us', 'admin'].includes(profile.role)) return null
-
-  return { ...session.user, canonicalId: profile.id }
-}
-
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ caseId: string }> }
 ) {
   try {
-    const user = await requireStaff(request)
+    const user = await requireStaff()
     if (!user) return NextResponse.json({ message: 'Unauthorised' }, { status: 403 })
 
     const { caseId } = await params
@@ -46,11 +28,14 @@ export async function POST(
 
     const { data: caseRow } = await supabase
       .from('cases')
-      .select('id, status, case_number, customer_id')
+      .select('id, status, case_number, office, customer_id')
       .eq('id', caseId)
       .single()
 
     if (!caseRow) return NextResponse.json({ message: 'Case not found' }, { status: 404 })
+    if (!canAccessOffice(user, caseRow.office)) {
+      return NextResponse.json({ message: 'This case belongs to another office queue' }, { status: 403 })
+    }
     if (!['SUBMITTED', 'UNDER_REVIEW'].includes(caseRow.status)) {
       return NextResponse.json({ message: 'Case cannot be rejected in its current status' }, { status: 409 })
     }

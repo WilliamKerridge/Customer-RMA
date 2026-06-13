@@ -1,36 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
-import { auth } from '@/lib/auth'
-import { headers } from 'next/headers'
+import { requireStaff, canAccessOffice } from '@/lib/auth-helpers'
 import { sendRMAIssued } from '@/lib/email'
 
 const UK_ADDRESS = 'Cosworth Electronics Ltd, Brookfield Technology Centre, Twentypence Road, Cottenham, Cambridge, CB24 8PS, United Kingdom'
 const US_ADDRESS = 'Cosworth Electronics LLC, 5355 W 86th St, Indianapolis, IN 46268, USA'
-
-async function requireStaff(request: NextRequest) {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) return null
-
-  const supabase = createServiceClient()
-  const { data } = await supabase
-    .from('users')
-    .select('id, role')
-    .eq('email', session.user.email)
-    .single()
-
-  const profile = data as { id: string; role: string } | null
-  if (!profile || !['staff_uk', 'staff_us', 'admin'].includes(profile.role)) return null
-
-  // Return the canonical UUID from public.users (not the better-auth TEXT id)
-  return { ...session.user, canonicalId: profile.id }
-}
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ caseId: string }> }
 ) {
   try {
-    const user = await requireStaff(request)
+    const user = await requireStaff()
     if (!user) return NextResponse.json({ message: 'Unauthorised' }, { status: 403 })
 
     const { caseId } = await params
@@ -44,6 +25,9 @@ export async function POST(
       .single()
 
     if (!caseRow) return NextResponse.json({ message: 'Case not found' }, { status: 404 })
+    if (!canAccessOffice(user, caseRow.office)) {
+      return NextResponse.json({ message: 'This case belongs to another office queue' }, { status: 403 })
+    }
     if (caseRow.status !== 'SUBMITTED') {
       return NextResponse.json({ message: 'Case is not in SUBMITTED status' }, { status: 409 })
     }

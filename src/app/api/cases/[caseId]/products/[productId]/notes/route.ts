@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/service'
-import { auth } from '@/lib/auth'
-import { headers } from 'next/headers'
+import { requireStaff, canAccessOffice } from '@/lib/auth-helpers'
 
 const BodySchema = z.object({
   workshop_findings:        z.string().max(2000).nullable().optional(),
@@ -17,16 +16,10 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ caseId: string; productId: string }> }
 ) {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) return NextResponse.json({ message: 'Unauthorised' }, { status: 401 })
+  const user = await requireStaff()
+  if (!user) return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
 
   const supabase = createServiceClient()
-  const { data: profile } = await supabase
-    .from('users').select('role').eq('email', session.user.email).single()
-
-  if (!['staff_uk', 'staff_us', 'admin'].includes((profile as { role: string } | null)?.role ?? '')) {
-    return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
-  }
 
   const body = await request.json()
   const parsed = BodySchema.safeParse(body)
@@ -35,6 +28,14 @@ export async function PATCH(
   }
 
   const { caseId, productId } = await params
+
+  const { data: caseRow } = await supabase
+    .from('cases').select('office').eq('id', caseId).single()
+  if (!caseRow) return NextResponse.json({ message: 'Case not found' }, { status: 404 })
+  if (!canAccessOffice(user, caseRow.office)) {
+    return NextResponse.json({ message: 'This case belongs to another office queue' }, { status: 403 })
+  }
+
   const updates: Record<string, unknown> = {}
 
   if (parsed.data.workshop_findings !== undefined)        updates.workshop_findings        = parsed.data.workshop_findings

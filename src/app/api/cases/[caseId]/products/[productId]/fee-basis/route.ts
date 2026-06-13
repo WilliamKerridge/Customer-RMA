@@ -1,23 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/service'
-import { auth } from '@/lib/auth'
-import { headers } from 'next/headers'
+import { requireStaff, canAccessOffice } from '@/lib/auth-helpers'
 
 const BodySchema = z.object({
   fee_basis: z.enum(['standard', 'warranty', 'foc']),
 })
-
-async function requireStaff() {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) return null
-  const supabase = createServiceClient()
-  const { data } = await supabase
-    .from('users').select('id, role').eq('email', session.user.email).single()
-  const profile = data as { id: string; role: string } | null
-  if (!profile || !['staff_uk', 'staff_us', 'admin'].includes(profile.role)) return null
-  return { ...session.user, canonicalId: profile.id }
-}
 
 export async function PATCH(
   request: NextRequest,
@@ -39,13 +27,17 @@ export async function PATCH(
 
     const { data: productRow } = await supabase
       .from('case_products')
-      .select('id, products(display_name)')
+      .select('id, cases(office), products(display_name)')
       .eq('id', productId)
       .eq('case_id', caseId)
       .single()
 
     if (!productRow) {
       return NextResponse.json({ message: 'Product not found on this case' }, { status: 404 })
+    }
+    const caseOffice = (productRow.cases as { office: 'UK' | 'US' } | null)?.office
+    if (!caseOffice || !canAccessOffice(user, caseOffice)) {
+      return NextResponse.json({ message: 'This case belongs to another office queue' }, { status: 403 })
     }
 
     const { error } = await supabase

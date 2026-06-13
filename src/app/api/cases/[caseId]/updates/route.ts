@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/service'
-import { auth } from '@/lib/auth'
-import { headers } from 'next/headers'
+import { requireStaff, canAccessOffice } from '@/lib/auth-helpers'
 
 const bodySchema = z.object({
   content: z.string().min(3, 'Update must be at least 3 characters'),
@@ -10,23 +9,6 @@ const bodySchema = z.object({
   statusChangeTo: z.string().nullable().optional(),
   productId: z.string().uuid().nullable().optional(),
 })
-
-async function requireStaff() {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) return null
-
-  const supabase = createServiceClient()
-  const { data } = await supabase
-    .from('users')
-    .select('id, role')
-    .eq('email', session.user.email)
-    .single()
-
-  const profile = data as { id: string; role: string } | null
-  if (!profile || !['staff_uk', 'staff_us', 'admin'].includes(profile.role)) return null
-
-  return { ...session.user, canonicalId: profile.id }
-}
 
 export async function POST(
   request: NextRequest,
@@ -48,11 +30,14 @@ export async function POST(
 
     const { data: caseRow } = await supabase
       .from('cases')
-      .select('id')
+      .select('id, office')
       .eq('id', caseId)
       .single()
 
     if (!caseRow) return NextResponse.json({ message: 'Case not found' }, { status: 404 })
+    if (!canAccessOffice(user, caseRow.office)) {
+      return NextResponse.json({ message: 'This case belongs to another office queue' }, { status: 403 })
+    }
 
     // Optionally update case status — only for top-level case status values.
     // Workshop stage and hold values (e.g. AWAITING_TEST, AWAITING_PARTS) are
