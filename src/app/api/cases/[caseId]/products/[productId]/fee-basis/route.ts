@@ -5,7 +5,7 @@ import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
 
 const BodySchema = z.object({
-  fee_basis: z.enum(['standard', 'warranty', 'foc']),
+  fee_basis: z.enum(['test', 'standard', 'major', 'service', 'foc', 'warranty_foc']),
 })
 
 async function requireStaff() {
@@ -59,7 +59,11 @@ export async function PATCH(
     }
 
     const productName = (productRow.products as { display_name: string } | null)?.display_name ?? 'product'
-    const label = fee_basis === 'warranty' ? 'Warranty (no charge)' : fee_basis === 'foc' ? 'FOC (no charge)' : 'Standard'
+    const LABELS: Record<string, string> = {
+      test: 'Test', standard: 'Standard', major: 'Major Repair',
+      service: 'Service', foc: 'FOC (no charge)', warranty_foc: 'Warranty FOC',
+    }
+    const label = LABELS[fee_basis] ?? fee_basis
 
     await supabase.from('case_updates').insert({
       case_id: caseId,

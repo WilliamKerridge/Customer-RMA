@@ -440,15 +440,21 @@ export default function AdminCaseDetailClient({
 // ── ProductsCard ─────────────────────────────────────────────────────────────
 
 const FEE_BASIS_OPTIONS = [
-  { value: 'standard', label: 'Standard' },
-  { value: 'warranty', label: 'Warranty (no charge)' },
-  { value: 'foc',      label: 'FOC (no charge)' },
+  { value: 'test',         label: 'Test' },
+  { value: 'standard',     label: 'Standard' },
+  { value: 'major',        label: 'Major Repair' },
+  { value: 'service',      label: 'Service' },
+  { value: 'foc',          label: 'FOC (no charge)' },
+  { value: 'warranty_foc', label: 'Warranty FOC' },
 ]
 
 const FEE_BASIS_BADGE: Record<string, { label: string; className: string }> = {
-  standard: { label: 'Standard',        className: 'bg-grey-100 text-grey-500' },
-  warranty: { label: 'Warranty',         className: 'bg-purple-100 text-purple-700' },
-  foc:      { label: 'FOC',             className: 'bg-blue/10 text-blue' },
+  test:         { label: 'Test',         className: 'bg-cyan-50 text-cyan-700' },
+  standard:     { label: 'Standard',     className: 'bg-grey-100 text-grey-500' },
+  major:        { label: 'Major Repair', className: 'bg-orange-50 text-orange-700' },
+  service:      { label: 'Service',      className: 'bg-emerald-50 text-emerald-700' },
+  foc:          { label: 'FOC',          className: 'bg-blue/10 text-blue' },
+  warranty_foc: { label: 'Warranty FOC', className: 'bg-purple-100 text-purple-700' },
 }
 
 function ProductsCard({
