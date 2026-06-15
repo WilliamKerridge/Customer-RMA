@@ -457,6 +457,15 @@ const FEE_BASIS_BADGE: Record<string, { label: string; className: string }> = {
   warranty_foc: { label: 'Warranty FOC', className: 'bg-purple-100 text-purple-700' },
 }
 
+const FEE_BASIS_DOT: Record<string, string> = {
+  test:         'bg-cyan-400',
+  standard:     'bg-grey-400',
+  major:        'bg-orange-400',
+  service:      'bg-emerald-400',
+  foc:          'bg-blue',
+  warranty_foc: 'bg-purple-400',
+}
+
 function ProductsCard({
   caseId,
   products,
@@ -955,19 +964,19 @@ function ProductsCard({
                 {feeSavingId === p.id ? (
                   <span className="text-[11px] text-grey-400">Saving…</span>
                 ) : (
-                  <select
-                    value={p.fee_basis ?? 'standard'}
-                    onChange={(e) => handleFeeBasisChange(p.id, e.target.value)}
-                    className="text-[11px] font-semibold border border-grey-200 rounded-md px-2 py-0.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue/30 focus:border-blue cursor-pointer"
-                  >
-                    {FEE_BASIS_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${FEE_BASIS_DOT[p.fee_basis ?? 'standard'] ?? 'bg-grey-400'}`} />
+                    <select
+                      value={p.fee_basis ?? 'standard'}
+                      onChange={(e) => handleFeeBasisChange(p.id, e.target.value)}
+                      className="text-[11px] font-semibold border border-grey-200 rounded-md px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue/30 focus:border-blue cursor-pointer"
+                    >
+                      {FEE_BASIS_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
                 )}
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${feeBadge.className}`}>
-                  {feeBadge.label}
-                </span>
               </div>
 
               {/* Accept / Reject controls — shown only during SUBMITTED review for pending products */}
