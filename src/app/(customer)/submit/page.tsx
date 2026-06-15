@@ -1,19 +1,22 @@
 import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
 import RMASubmitForm from '@/components/forms/RMASubmitForm'
 import type { CustomerAccountRow } from '@/types/database'
 
 export default async function SubmitPage() {
-  const supabase = await createClient()
-
-  // Fetch active products for the form
-  const { data: products } = await supabase
+  // Use service client for products — active products are public info and
+  // the service client bypasses RLS, avoiding permission/column issues.
+  const serviceSupabase = createServiceClient()
+  const { data: products } = await serviceSupabase
     .from('products')
     .select('id, part_number, variant, display_name, category, test_fee, standard_repair_fee, major_repair_fee, service_fee')
     .eq('active', true)
     .order('category')
     .order('display_name')
+
+  const supabase = await createClient()
 
   // Get current user (optional — /submit is public)
   const session = await auth.api.getSession({ headers: await headers() })
