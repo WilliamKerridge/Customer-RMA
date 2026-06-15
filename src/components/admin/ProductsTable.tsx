@@ -27,7 +27,8 @@ function categoryBadge(cat: string) {
   )
 }
 
-function formatFee(n: number) {
+function formatFee(n: number | null | undefined) {
+  if (n == null) return '—'
   return `£${n.toLocaleString('en-GB')}`
 }
 
@@ -58,7 +59,7 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
 
   function startEdit(product: ProductRow, field: FeeField) {
     setEditing({ productId: product.id, field })
-    setEditValue(String(product[field]))
+    setEditValue(product[field] != null ? String(product[field]) : '')
     setTimeout(() => inputRef.current?.select(), 10)
   }
 
