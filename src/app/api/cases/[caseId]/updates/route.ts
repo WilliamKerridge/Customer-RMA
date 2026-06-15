@@ -3,6 +3,9 @@ import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/service'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
+import { sendCaseUpdate } from '@/lib/email'
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
 const bodySchema = z.object({
   content: z.string().min(3, 'Update must be at least 3 characters'),
@@ -88,6 +91,26 @@ export async function POST(
     if (error) {
       console.error('case_updates insert failed:', error)
       return NextResponse.json({ message: 'Failed to post update' }, { status: 500 })
+    }
+
+    // Send email to customer for non-internal updates only
+    if (!isInternal) {
+      const { data: caseRow2 } = await supabase
+        .from('cases')
+        .select('case_number, customer_id, users ( email, full_name )')
+        .eq('id', caseId)
+        .single()
+
+      if (caseRow2?.users) {
+        const cu = caseRow2.users as { email: string; full_name: string | null }
+        sendCaseUpdate(caseId, cu.email, {
+          customerName: cu.full_name ?? cu.email,
+          caseNumber: caseRow2.case_number,
+          updateContent: content,
+          authorName: user.name ?? 'Cosworth Service Team',
+          caseUrl: `${APP_URL}/cases/${caseId}`,
+        })
+      }
     }
 
     return NextResponse.json({ ok: true }, { status: 200 })
