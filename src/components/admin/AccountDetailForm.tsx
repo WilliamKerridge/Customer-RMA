@@ -141,7 +141,7 @@ export default function AccountDetailForm({
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="text-sm font-medium text-text">{label}</div>
-          <div className="text-[12px] text-grey-400 mt-0.5">{description}</div>
+          <div className="text-[12px] text-grey-600 mt-0.5">{description}</div>
         </div>
         <button
           type="button"
@@ -199,7 +199,7 @@ export default function AccountDetailForm({
                   disabled
                   className="w-full px-3.5 py-2.5 border-2 border-grey-100 rounded-lg text-sm text-grey-400 bg-grey-50 cursor-not-allowed"
                 />
-                <p className="mt-1 text-[11px] text-grey-400">Email cannot be changed here</p>
+                <p className="mt-1 text-[11px] text-grey-600">Email cannot be changed here</p>
               </div>
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-grey-700 mb-1.5">Phone</label>
@@ -368,7 +368,7 @@ export default function AccountDetailForm({
                 {Object.values(account.billing_address).filter(Boolean).join('\n')}
               </pre>
             ) : (
-              <p className="text-[13px] text-grey-400">No billing address on file.</p>
+              <p className="text-[13px] text-grey-600">No billing address on file.</p>
             )}
           </div>
         </div>

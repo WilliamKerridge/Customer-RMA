@@ -114,7 +114,7 @@ export default function AdminAttachmentsCard({
             }`}
           >
             <Paperclip className="w-4 h-4 text-grey-300 mx-auto mb-1.5" />
-            <p className="text-[12px] text-grey-400">
+            <p className="text-[12px] text-grey-600">
               {uploading ? 'Uploading…' : 'Drop a file here or use Upload'}
             </p>
           </div>

@@ -291,7 +291,7 @@ export default function AdminCaseDetailClient({
             </div>
             <div className="px-[22px] py-5">
               {visibleUpdates.length === 0 ? (
-                <p className="text-[13px] text-grey-400">No updates yet.</p>
+                <p className="text-[13px] text-grey-600">No updates yet.</p>
               ) : (
                 <div className="relative">
                   <div className="absolute left-[9px] top-2 bottom-2 w-0.5 bg-grey-200" />
@@ -822,7 +822,7 @@ function SubmissionDetailsCard({
     <div className="bg-white rounded-xl border border-grey-200 shadow-sm overflow-hidden">
       <div className="px-[22px] py-[18px] border-b border-grey-100">
         <h2 className="font-heading text-sm font-semibold text-text">Submission Details</h2>
-        <p className="text-[11px] text-grey-400 mt-0.5">As submitted by the customer</p>
+        <p className="text-[11px] text-grey-600 mt-0.5">As submitted by the customer</p>
       </div>
 
       <div className="divide-y divide-grey-100">
@@ -869,7 +869,7 @@ function SubmissionDetailsCard({
                   <p className="text-[13px] text-grey-700 leading-relaxed">{p.fault_notes}</p>
                 </div>
               ) : (
-                <p className="ml-8 text-[12px] text-grey-400 italic">No fault notes provided.</p>
+                <p className="ml-8 text-[12px] text-grey-600 italic">No fault notes provided.</p>
               )}
             </div>
           )

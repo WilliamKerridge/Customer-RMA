@@ -16,7 +16,7 @@ export default function CaseTimeline({ updates }: Props) {
     return (
       <div className="bg-white rounded-xl border border-grey-200 shadow-sm p-[22px]">
         <h2 className="font-heading text-sm font-semibold text-text mb-4">Case Updates</h2>
-        <p className="text-[13px] text-grey-400">No updates yet.</p>
+        <p className="text-[13px] text-grey-600">No updates yet.</p>
       </div>
     )
   }

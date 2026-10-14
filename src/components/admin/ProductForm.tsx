@@ -155,7 +155,7 @@ export default function ProductForm({ product, totalCases = 0, openCases = 0, is
             errors[id] ? 'border-red-400 ring-2 ring-red-400/10' : 'border-grey-200'
           }`}
         />
-        {hint && <p className="mt-1 text-[12px] text-grey-400">{hint}</p>}
+        {hint && <p className="mt-1 text-[12px] text-grey-600">{hint}</p>}
         {errors[id] && <p className="mt-1 text-[12px] text-red-500">{errors[id]}</p>}
       </div>
     )
@@ -178,7 +178,7 @@ export default function ProductForm({ product, totalCases = 0, openCases = 0, is
             errors[id] ? 'border-red-400 ring-2 ring-red-400/10' : 'border-grey-200'
           }`}
         />
-        <p className="mt-1 text-[12px] text-grey-400">{hint}</p>
+        <p className="mt-1 text-[12px] text-grey-600">{hint}</p>
         {errors[id] && <p className="mt-1 text-[12px] text-red-500">{errors[id]}</p>}
       </div>
     )
@@ -207,7 +207,7 @@ export default function ProductForm({ product, totalCases = 0, openCases = 0, is
                     errors.part_number ? 'border-red-400' : 'border-grey-200'
                   }`}
                 />
-                <p className="mt-1 text-[12px] text-grey-400">Must be unique. Matches SAP material number.</p>
+                <p className="mt-1 text-[12px] text-grey-600">Must be unique. Matches SAP material number.</p>
                 {errors.part_number && <p className="mt-1 text-[12px] text-red-500">{errors.part_number}</p>}
               </div>
               {field('variant', 'Variant', false, 'e.g. BTCC, Porsche, LMP2')}
@@ -249,7 +249,7 @@ export default function ProductForm({ product, totalCases = 0, openCases = 0, is
         <div className="bg-white rounded-xl border border-grey-200 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-grey-100 flex items-center justify-between">
             <h2 className="font-semibold text-[15px] text-text">Service Fees</h2>
-            <span className="text-[12px] text-grey-400">Shown to customers as estimates</span>
+            <span className="text-[12px] text-grey-600">Shown to customers as estimates</span>
           </div>
           <div className="p-6">
             <div className="flex items-start gap-2.5 bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 mb-5">
@@ -277,7 +277,7 @@ export default function ProductForm({ product, totalCases = 0, openCases = 0, is
             <div className="flex items-center justify-between mb-3">
               <div>
                 <div className="text-sm font-medium text-text">Active</div>
-                <div className="text-[12px] text-grey-400 mt-0.5">
+                <div className="text-[12px] text-grey-600 mt-0.5">
                   Active products appear in the submission form
                 </div>
               </div>
@@ -354,7 +354,7 @@ export default function ProductForm({ product, totalCases = 0, openCases = 0, is
                 {deleting ? 'Deleting…' : 'Delete Product'}
               </button>
               {openCases > 0 && (
-                <p className="mt-2 text-[11px] text-grey-400 text-center">
+                <p className="mt-2 text-[11px] text-grey-600 text-center">
                   Cannot delete — {openCases} open case{openCases !== 1 ? 's' : ''} reference this product
                 </p>
               )}

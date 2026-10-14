@@ -99,7 +99,7 @@ export default async function TokenisedRespondPage({ params, searchParams }: Pro
           />
         )}
 
-        <p className="mt-6 text-center text-[12px] text-grey-400">
+        <p className="mt-6 text-center text-[12px] text-grey-600">
           Have an account?{' '}
           <Link href={`/cases/${caseId}`} className="text-blue hover:underline">
             Sign in to view your full case

@@ -127,7 +127,7 @@ export default function AddAccountForm() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="text-sm font-medium text-text">{label}</div>
-          <div className="text-[12px] text-grey-400 mt-0.5">{description}</div>
+          <div className="text-[12px] text-grey-600 mt-0.5">{description}</div>
         </div>
         <button
           type="button"
@@ -197,7 +197,7 @@ export default function AddAccountForm() {
                   className={inputClass(errors.email)}
                 />
                 {errors.email && <p className="mt-1 text-[12px] text-red-500">{errors.email}</p>}
-                <p className="mt-1 text-[11px] text-grey-400">Used to look up or create the customer login</p>
+                <p className="mt-1 text-[11px] text-grey-600">Used to look up or create the customer login</p>
               </div>
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-grey-700 mb-1.5">Phone</label>

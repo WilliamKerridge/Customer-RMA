@@ -141,7 +141,7 @@ export default function AdminSapCard({
         <div>
           <h2 className="font-heading text-sm font-semibold text-text">SAP Data</h2>
           {isMultiProductAggregate && (
-            <p className="text-[10px] text-grey-400 mt-0.5">Totals across all products — select a product to edit</p>
+            <p className="text-[10px] text-grey-600 mt-0.5">Totals across all products — select a product to edit</p>
           )}
         </div>
         <div className="flex items-center gap-2">

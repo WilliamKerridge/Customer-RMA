@@ -259,7 +259,7 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
           &nbsp;&nbsp;·&nbsp;&nbsp;
           <span className="text-grey-400">{products.filter((p) => !p.active).length} inactive</span>
         </div>
-        <div className="text-[11px] text-grey-400">Click any fee cell to edit inline</div>
+        <div className="text-[11px] text-grey-600">Click any fee cell to edit inline</div>
       </div>
     </div>
   )

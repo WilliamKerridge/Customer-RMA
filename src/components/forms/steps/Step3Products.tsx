@@ -236,7 +236,7 @@ export default function Step3Products({ data, onNext, onBack, products }: Props)
               <line x1="12" y1="3" x2="12" y2="15" />
             </svg>
             <p className="text-[13px] font-medium text-grey-600">Click to upload fault evidence</p>
-            <p className="text-[11px] text-grey-400 mt-1">Photos, diagnostic logs — max 10 files, 10MB each</p>
+            <p className="text-[11px] text-grey-600 mt-1">Photos, diagnostic logs — max 10 files, 10MB each</p>
           </div>
 
           <input

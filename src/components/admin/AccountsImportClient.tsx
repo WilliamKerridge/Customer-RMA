@@ -113,7 +113,7 @@ export default function AccountsImportClient() {
             <p className="text-[12.5px] text-grey-500">
               Drag and drop an Excel file here, or click to browse
             </p>
-            <p className="text-[11px] text-grey-400 mt-1">.xlsx or .xls · Max 10 MB</p>
+            <p className="text-[11px] text-grey-600 mt-1">.xlsx or .xls · Max 10 MB</p>
           </div>
           <input
             ref={fileInputRef}

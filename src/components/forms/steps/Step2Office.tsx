@@ -137,7 +137,7 @@ export default function Step2Office({ data, onNext, onBack, poRequired }: Props)
                     : 'border-grey-200 focus:border-blue focus:shadow-[0_0_0_3px_rgba(0,102,204,0.1)]'
                 }`}
               />
-              <p className="mt-1 text-[11px] text-grey-400">Earliest date you need the unit back</p>
+              <p className="mt-1 text-[11px] text-grey-600">Earliest date you need the unit back</p>
               {errors.required_return_date && (
                 <p className="mt-1 text-[11px] text-red-500">{errors.required_return_date.message}</p>
               )}
@@ -153,7 +153,7 @@ export default function Step2Office({ data, onNext, onBack, poRequired }: Props)
                   className={inputClass}
                   placeholder="PO-2026-XXXX"
                 />
-                <p className="mt-1 text-[11px] text-grey-400">Required for your account</p>
+                <p className="mt-1 text-[11px] text-grey-600">Required for your account</p>
               </div>
             )}
           </div>
