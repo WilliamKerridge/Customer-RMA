@@ -300,7 +300,7 @@ export default function Step5Review({
             type="button"
             onClick={onBack}
             disabled={isSubmitting}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold bg-white text-text border border-grey-300 hover:bg-grey-50 transition-all disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-3 sm:py-2 rounded-lg text-[13px] font-semibold bg-white text-text border border-grey-300 hover:bg-grey-50 transition-all disabled:opacity-50"
           >
             ← Back
           </button>

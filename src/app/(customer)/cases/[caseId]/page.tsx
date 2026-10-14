@@ -6,6 +6,7 @@ import { createUserScopedClient } from '@/lib/supabase/with-auth'
 import WorkshopStageTracker from '@/components/cases/WorkshopStageTracker'
 import CaseTimeline from '@/components/cases/CaseTimeline'
 import HoldStateBanner from '@/components/cases/HoldStateBanner'
+import PageHero from '@/components/layout/PageHero'
 import type { CaseUpdateRow } from '@/types/database'
 
 const STATUS_LABELS: Record<string, string> = {
@@ -97,29 +98,23 @@ export default async function CaseDetailPage({ params }: Props) {
   return (
     <>
       {/* Hero */}
-      <div className="bg-gradient-to-br from-navy via-navy-mid to-[#004080] px-8 pt-9 pb-8 relative overflow-hidden">
-        <div className="absolute -top-15 -right-15 w-75 h-75 pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(0,180,216,0.12) 0%, transparent 70%)' }} />
-        <div className="absolute bottom-0 left-0 right-0 h-px opacity-40"
-          style={{ background: 'linear-gradient(90deg, transparent, #00b4d8, transparent)' }} />
-        <div className="max-w-[1200px] mx-auto">
-          <div className="flex items-center gap-2 text-[12px] text-white/50 mb-2.5 font-mono">
-            <Link href="/cases" className="hover:text-white/80 transition-colors">My Returns</Link>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-            <span className="text-brand-accent">{caseData.case_number}</span>
-          </div>
-          <h1 className="font-heading text-[26px] font-bold text-white leading-tight">
-            Case {caseData.case_number}
-          </h1>
-          <p className="mt-1.5 text-[13px] text-white/60">
-            {STATUS_LABELS[caseData.status] ?? caseData.status}
-            {' · '}
-            {FAULT_TYPE_LABELS[caseData.fault_type] ?? caseData.fault_type}
-          </p>
+      <PageHero>
+        <div className="flex items-center gap-2 text-[12px] text-white/50 mb-2.5 font-mono">
+          <Link href="/cases" className="hover:text-white/80 transition-colors">My Returns</Link>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+          <span className="text-brand-accent">{caseData.case_number}</span>
         </div>
-      </div>
+        <h1 className="font-heading text-[26px] font-bold text-white leading-tight">
+          Case {caseData.case_number}
+        </h1>
+        <p className="mt-1.5 text-[13px] text-white/60">
+          {STATUS_LABELS[caseData.status] ?? caseData.status}
+          {' · '}
+          {FAULT_TYPE_LABELS[caseData.fault_type] ?? caseData.fault_type}
+        </p>
+      </PageHero>
 
       {/* Content */}
       <div className="max-w-[1200px] mx-auto w-full px-8 py-7">
@@ -134,6 +129,9 @@ export default async function CaseDetailPage({ params }: Props) {
                 holdCustomerLabel={caseData.hold_customer_label ?? ''}
                 awaitingCustomerQuestion={caseData.awaiting_customer_question}
                 caseId={caseId}
+                contactEmail={caseData.office === 'US'
+                  ? (process.env.US_SALES_EMAIL ?? 'us-sales@cosworth.com')
+                  : (process.env.UK_RETURNS_EMAIL ?? 'returns@cosworth.com')}
               />
             )}
 

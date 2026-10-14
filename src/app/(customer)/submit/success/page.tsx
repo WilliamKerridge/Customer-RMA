@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import PageHero from '@/components/layout/PageHero'
 
 interface Props {
   searchParams: Promise<{ caseId?: string; caseNumber?: string }>
@@ -11,31 +12,21 @@ export default async function SuccessPage({ searchParams }: Props) {
   return (
     <>
       {/* Hero */}
-      <div className="bg-gradient-to-br from-navy via-navy-mid to-[#004080] px-8 pt-9 pb-8 relative overflow-hidden">
-        <div
-          className="absolute -top-15 -right-15 w-75 h-75 pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(0,180,216,0.12) 0%, transparent 70%)' }}
-        />
-        <div
-          className="absolute bottom-0 left-0 right-0 h-px opacity-40"
-          style={{ background: 'linear-gradient(90deg, transparent, #00b4d8, transparent)' }}
-        />
-        <div className="max-w-[1200px] mx-auto">
-          <div className="flex items-center gap-2 text-[12px] text-white/50 mb-2.5 font-mono">
-            Home
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-            <span className="text-brand-accent">Return Submitted</span>
-          </div>
-          <h1 className="font-heading text-[26px] font-bold text-white leading-tight">
-            Return Submitted Successfully
-          </h1>
-          <p className="mt-1.5 text-[13px] text-white/60">
-            Your case has been created and our team will review it within 24 hours.
-          </p>
+      <PageHero>
+        <div className="flex items-center gap-2 text-[12px] text-white/50 mb-2.5 font-mono">
+          Home
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+          <span className="text-brand-accent">Return Submitted</span>
         </div>
-      </div>
+        <h1 className="font-heading text-[26px] font-bold text-white leading-tight">
+          Return Submitted Successfully
+        </h1>
+        <p className="mt-1.5 text-[13px] text-white/60">
+          Your case has been created and our team will review it within 24 hours.
+        </p>
+      </PageHero>
 
       {/* Success card */}
       <div className="max-w-[640px] mx-auto w-full px-8 py-7">

@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase/service'
 import StripePaymentForm from './StripePaymentForm'
+import PageHero from '@/components/layout/PageHero'
 
 const UK_CONTACT = { email: 'returns@cosworth.com', phone: '+44 (0)1895 246100' }
 const US_CONTACT = { email: 'us-returns@cosworth.com', phone: '+1 (317) 570-7600' }
@@ -59,16 +60,10 @@ export default async function PaymentPage({ params }: Props) {
     return (
       <>
         {/* Hero */}
-        <div className="bg-gradient-to-br from-navy via-navy-mid to-[#004080] px-8 pt-9 pb-8 relative overflow-hidden">
-          <div className="absolute -top-15 -right-15 w-75 h-75 pointer-events-none"
-            style={{ background: 'radial-gradient(circle, rgba(0,180,216,0.12) 0%, transparent 70%)' }} />
-          <div className="absolute bottom-0 left-0 right-0 h-px opacity-40"
-            style={{ background: 'linear-gradient(90deg, transparent, #00b4d8, transparent)' }} />
-          <div className="max-w-[600px] mx-auto">
-            <h1 className="font-heading text-[26px] font-bold text-white leading-tight">Payment Required</h1>
-            <p className="mt-1.5 text-[13px] text-white/60">Case {caseRow.case_number}</p>
-          </div>
-        </div>
+        <PageHero containerClass="max-w-[600px] mx-auto">
+          <h1 className="font-heading text-[26px] font-bold text-white leading-tight">Payment Required</h1>
+          <p className="mt-1.5 text-[13px] text-white/60">Case {caseRow.case_number}</p>
+        </PageHero>
 
         {/* Content */}
         <div className="max-w-[600px] mx-auto px-6 py-8">
@@ -137,16 +132,10 @@ export default async function PaymentPage({ params }: Props) {
   // ── Stripe mode ───────────────────────────────────────────────────────────
   return (
     <>
-      <div className="bg-gradient-to-br from-navy via-navy-mid to-[#004080] px-8 pt-9 pb-8 relative overflow-hidden">
-        <div className="absolute -top-15 -right-15 w-75 h-75 pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(0,180,216,0.12) 0%, transparent 70%)' }} />
-        <div className="absolute bottom-0 left-0 right-0 h-px opacity-40"
-          style={{ background: 'linear-gradient(90deg, transparent, #00b4d8, transparent)' }} />
-        <div className="max-w-[600px] mx-auto">
-          <h1 className="font-heading text-[26px] font-bold text-white leading-tight">Complete Payment</h1>
-          <p className="mt-1.5 text-[13px] text-white/60">Case {caseRow.case_number} · {formatCurrency(amount)}</p>
-        </div>
-      </div>
+      <PageHero containerClass="max-w-[600px] mx-auto">
+        <h1 className="font-heading text-[26px] font-bold text-white leading-tight">Complete Payment</h1>
+        <p className="mt-1.5 text-[13px] text-white/60">Case {caseRow.case_number} · {formatCurrency(amount)}</p>
+      </PageHero>
 
       <div className="max-w-[600px] mx-auto px-6 py-8">
         <StripePaymentForm

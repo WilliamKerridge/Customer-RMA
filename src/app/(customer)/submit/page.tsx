@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
 import { createUserScopedClient } from '@/lib/supabase/with-auth'
 import RMASubmitForm from '@/components/forms/RMASubmitForm'
+import PageHero from '@/components/layout/PageHero'
 import type { CustomerAccountRow } from '@/types/database'
 
 export default async function SubmitPage() {
@@ -48,29 +49,21 @@ export default async function SubmitPage() {
   return (
     <>
       {/* Page hero */}
-      <div className="bg-gradient-to-br from-navy via-navy-mid to-[#004080] px-8 pt-9 pb-8 relative overflow-hidden">
-        <div className="absolute -top-15 -right-15 w-75 h-75 pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(0,180,216,0.12) 0%, transparent 70%)' }}
-        />
-        <div className="absolute bottom-0 left-0 right-0 h-px opacity-40"
-          style={{ background: 'linear-gradient(90deg, transparent, #00b4d8, transparent)' }}
-        />
-        <div className="max-w-[1200px] mx-auto">
-          <div className="flex items-center gap-2 text-[12px] text-white/50 mb-2.5 font-mono">
-            Home
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-            <span className="text-brand-accent">New Return</span>
-          </div>
-          <h1 className="font-heading text-[26px] font-bold text-white leading-tight">
-            New Return Request
-          </h1>
-          <p className="mt-1.5 text-[13px] text-white/60">
-            Submit a product for repair, service, or return. You'll receive a Case ID immediately.
-          </p>
+      <PageHero>
+        <div className="flex items-center gap-2 text-[12px] text-white/50 mb-2.5 font-mono">
+          Home
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+          <span className="text-brand-accent">New Return</span>
         </div>
-      </div>
+        <h1 className="font-heading text-[26px] font-bold text-white leading-tight">
+          New Return Request
+        </h1>
+        <p className="mt-1.5 text-[13px] text-white/60">
+          Submit a product for repair, service, or return. You&apos;ll receive a Case ID immediately.
+        </p>
+      </PageHero>
 
       {/* Form content */}
       <div className="max-w-[1200px] mx-auto w-full px-8 py-7">

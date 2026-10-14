@@ -42,7 +42,7 @@ export default function CaseListClient({ cases }: Props) {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12.5px] font-semibold transition-all ${
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2.5 sm:py-1.5 rounded-full text-[12.5px] font-semibold transition-all ${
                 isActive
                   ? 'bg-blue text-white'
                   : 'bg-white border border-grey-200 text-grey-600 hover:border-grey-300 hover:text-text'

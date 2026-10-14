@@ -191,7 +191,7 @@ export default function Step1Contact({ data, onNext, isGuest }: Props) {
           <div className="flex justify-end mt-5">
             <button
               type="submit"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold bg-blue text-white hover:bg-blue-light transition-all hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(0,102,204,0.3)]"
+              className="inline-flex items-center gap-1.5 px-4 py-3 sm:py-2 rounded-lg text-[13px] font-semibold bg-blue text-white hover:bg-blue-light transition-all hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(0,102,204,0.3)]"
             >
               Next
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="w-3.5 h-3.5">

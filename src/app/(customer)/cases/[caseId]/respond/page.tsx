@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createServiceClient } from '@/lib/supabase/service'
 import HoldStateBanner from '@/components/cases/HoldStateBanner'
+import PageHero from '@/components/layout/PageHero'
 
 interface Props {
   params: Promise<{ caseId: string }>
@@ -36,7 +37,7 @@ export default async function TokenisedRespondPage({ params, searchParams }: Pro
   // Fetch the case
   const { data: caseRow } = await supabase
     .from('cases')
-    .select('id, case_number, is_on_hold, hold_reason, hold_customer_label, awaiting_customer_question')
+    .select('id, case_number, is_on_hold, hold_reason, hold_customer_label, awaiting_customer_question, office')
     .eq('id', caseId)
     .single()
 
@@ -47,27 +48,17 @@ export default async function TokenisedRespondPage({ params, searchParams }: Pro
   return (
     <div className="bg-gradient-to-b from-grey-50 to-white min-h-[calc(100vh-64px)]">
       {/* Page hero */}
-      <div className="bg-gradient-to-br from-navy via-navy-mid to-[#004080] px-8 pt-9 pb-8 relative overflow-hidden">
-        <div
-          className="absolute -top-15 -right-15 w-75 h-75 pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(0,180,216,0.12) 0%, transparent 70%)' }}
-        />
-        <div
-          className="absolute bottom-0 left-0 right-0 h-px opacity-40"
-          style={{ background: 'linear-gradient(90deg, transparent, #00b4d8, transparent)' }}
-        />
-        <div className="max-w-[640px] mx-auto">
-          <div className="flex items-center gap-2 text-[12px] text-white/50 mb-2.5 font-mono">
-            <span>Case {caseRow.case_number}</span>
-          </div>
-          <h1 className="font-heading text-[26px] font-bold text-white leading-tight">
-            Respond to Our Team
-          </h1>
-          <p className="mt-1.5 text-[13px] text-white/60">
-            Your repair is paused while we wait for your response
-          </p>
+      <PageHero containerClass="max-w-[640px] mx-auto">
+        <div className="flex items-center gap-2 text-[12px] text-white/50 mb-2.5 font-mono">
+          <span>Case {caseRow.case_number}</span>
         </div>
-      </div>
+        <h1 className="font-heading text-[26px] font-bold text-white leading-tight">
+          Respond to Our Team
+        </h1>
+        <p className="mt-1.5 text-[13px] text-white/60">
+          Your repair is paused while we wait for your response
+        </p>
+      </PageHero>
 
       {/* Content */}
       <div className="max-w-[640px] mx-auto px-6 py-8">
@@ -96,6 +87,9 @@ export default async function TokenisedRespondPage({ params, searchParams }: Pro
             awaitingCustomerQuestion={caseRow.awaiting_customer_question}
             caseId={caseId}
             token={token}
+            contactEmail={caseRow.office === 'US'
+              ? (process.env.US_SALES_EMAIL ?? 'us-sales@cosworth.com')
+              : (process.env.UK_RETURNS_EMAIL ?? 'returns@cosworth.com')}
           />
         )}
 

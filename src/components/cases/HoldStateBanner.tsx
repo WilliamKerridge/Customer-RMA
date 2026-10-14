@@ -10,6 +10,7 @@ interface Props {
   caseId: string
   onResponseSent?: () => void
   token?: string  // for tokenised access (no login)
+  contactEmail?: string  // office-specific contact address
 }
 
 export default function HoldStateBanner({
@@ -19,6 +20,7 @@ export default function HoldStateBanner({
   caseId,
   onResponseSent,
   token,
+  contactEmail = 'returns@cosworth.com',
 }: Props) {
   const [response, setResponse] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -110,15 +112,15 @@ export default function HoldStateBanner({
               )}
               <div className="flex gap-2.5">
                 <a
-                  href="mailto:returns@cosworth.com"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] font-semibold bg-white text-text border border-grey-300 hover:bg-grey-50 transition-all"
+                  href={`mailto:${contactEmail}`}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-3 sm:py-2 rounded-lg text-[13px] font-semibold bg-white text-text border border-grey-300 hover:bg-grey-50 transition-all"
                 >
                   I&apos;ll call to discuss
                 </a>
                 <button
                   onClick={handleSendResponse}
                   disabled={isSubmitting}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold bg-amber-500 text-white hover:bg-amber-600 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-1.5 px-4 py-3 sm:py-2 rounded-lg text-[13px] font-semibold bg-amber-500 text-white hover:bg-amber-600 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <>
